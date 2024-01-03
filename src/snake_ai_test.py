@@ -26,8 +26,6 @@ game_window = pygame.display.set_mode((window_x, window_y))
 # FPS (frames per second) controller
 fps = pygame.time.Clock()
 
-has_won = False
-
 def spawn_apple(snake_coordinates):
 	grid = [[1 for _ in range(int(window_x/10))] for _ in range(int(window_y/10))]
 	for x,y in snake_coordinates: grid[int(y/10)][int(x/10)] = 0
@@ -37,8 +35,7 @@ def spawn_apple(snake_coordinates):
 		new_apple = new_apple[0]*10, new_apple[1]*10
 		return new_apple
 	else: 
-		has_won = True
-		return [0,0]
+		return "WINNER"
 
 
 

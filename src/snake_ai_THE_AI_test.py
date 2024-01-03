@@ -5,10 +5,11 @@ import pygame
 env = snake_ai_test
 exit_program = False
 render = True
+has_won = False
 
 while not exit_program:
 	# handling key events
-	for event in pygame.event.get():
+	for event in pygame.event.get():		
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_UP:
 				env.change_to = 'UP'
@@ -63,6 +64,9 @@ while not exit_program:
 	
 	if not env.fruit_spawn:
 		env.fruit_position = env.spawn_apple(env.snake_body)
+		if env.fruit_position == "WINNER": 
+			has_won = True
+			break #Indtil videre, vi skal have implementeret en vinderfunktion
 		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
 							env.random.randrange(1, (env.window_y//10)) * 10]"""
 		
