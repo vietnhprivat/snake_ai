@@ -62,8 +62,9 @@ while not exit_program:
 	
 	
 	if not env.fruit_spawn:
-		env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
-							env.random.randrange(1, (env.window_y//10)) * 10]
+		env.fruit_position = env.spawn_apple(env.snake_body)
+		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
+							env.random.randrange(1, (env.window_y//10)) * 10]"""
 		
 		
 	env.fruit_spawn = True
