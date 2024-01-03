@@ -89,7 +89,7 @@ def reset():
 			[start_pos[0]-20, start_pos[1]],
 			[start_pos[0]-30, start_pos[1]]
 			]
-	print(start_pos)
-	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local
+	steps = 0
+	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local, steps
 	
-snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body = reset()
+snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body, steps = reset()

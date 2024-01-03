@@ -19,7 +19,7 @@ while not exit_program:
 			if event.key == pygame.K_RIGHT:
 				env.change_to = 'RIGHT'
 			if event.key == pygame.K_r:
-				env.snake_position, env.fruit_position,env.fruit_spawn,env.score,env.direction,env.change_to, env.snake_body = env.reset() ########
+				env.snake_position, env.fruit_position,env.fruit_spawn,env.score,env.direction,env.change_to, env.snake_body, env.steps = env.reset() ########
 	if event.type == pygame.QUIT:
 		exit_program = True
 		#env.game_over()
@@ -48,6 +48,8 @@ while not exit_program:
 		env.snake_position[0] -= 10
 	if env.direction == 'RIGHT':
 		env.snake_position[0] += 10
+	env.steps += 1
+	print(env.steps)
 
 	# Snake body growing mechanism
 	# if fruits and snakes collide then scores
