@@ -1,5 +1,5 @@
 #AI VERSION
-import snake_ai.src.snake_ai_test as snake_ai_test
+import snake_ai_test as snake_ai_test
 import pygame
 
 env = snake_ai_test
