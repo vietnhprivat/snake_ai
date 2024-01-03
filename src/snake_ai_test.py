@@ -26,28 +26,7 @@ game_window = pygame.display.set_mode((window_x, window_y))
 # FPS (frames per second) controller
 fps = pygame.time.Clock()
 
-# defining snake default position
-snake_position = [100, 50]
 
-# defining first 4 blocks of snake body
-snake_body = [[100, 50],
-			[90, 50],
-			[80, 50],
-			[70, 50]
-			]
-# fruit position
-fruit_position = [random.randrange(1, (window_x//10)) * 10, 
-				random.randrange(1, (window_y//10)) * 10]
-
-fruit_spawn = True
-
-# setting default snake direction towards
-# right
-direction = 'RIGHT'
-change_to = direction
-
-# initial score
-score = 0
 
 # displaying Score function
 def show_score(choice, color, font, size):
@@ -99,16 +78,18 @@ def game_over():
 def close():
 	pygame.quit()
 def reset():
-	start_pos = [100,50]
+	start_pos = [random.randrange(4, (window_x//10)-10) * 10, random.randrange(1, (window_y//10)) * 10]
 	start_fruit = [random.randrange(1, (window_x//10)) * 10, random.randrange(1, (window_y//10)) * 10]
 	fruit_spawn_local = True
 	score_local = 0
 	direction_local = 'RIGHT'
 	change_to_local = direction_local
-	snake_body_local = [[100, 50],
-			[90, 50],
-			[80, 50],
-			[70, 50]
+	snake_body_local = [[start_pos[0],start_pos[1]],
+			[start_pos[0]-10, start_pos[1]],
+			[start_pos[0]-20, start_pos[1]],
+			[start_pos[0]-30, start_pos[1]]
 			]
+	print(start_pos)
 	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local
 	
+snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body = reset()

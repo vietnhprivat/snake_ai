@@ -71,7 +71,7 @@ while not exit_program:
 	for pos in env.snake_body:
 		pygame.draw.rect(env.game_window, env.green,
 						pygame.Rect(pos[0], pos[1], 10, 10))
-	pygame.draw.rect(env.game_window, env.white, pygame.Rect(
+	pygame.draw.rect(env.game_window, env.red, pygame.Rect(
 		env.fruit_position[0], env.fruit_position[1], 10, 10))
 
 	# Game Over conditions
