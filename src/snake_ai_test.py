@@ -112,9 +112,9 @@ def reset():
 	# Ud fra den tilfældige startposition. Returnerer en tuple
 	direction_local = 'RIGHT'
 	change_to_local = direction_local
-	steps = 0
-	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local, steps
+	time_steps = 0
+	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local, time_steps
 
 
 #Initialiserer første spil
-snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body, steps = reset()
+snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body, time_steps = reset()
