@@ -85,6 +85,7 @@ while not exit_program:
 		env.snake_position[0] += 10
 	env.time_steps += 1
 
+	curr_action = env.direction
 	# Snake body growing mechanism
 	# if fruits and snakes collide then scores
 	# will be incremented by 10
@@ -155,12 +156,12 @@ while not exit_program:
 		# Refresh game screen
 		pygame.display.update()
 		# Frame Per Second /Refresh Rate
-		env.fps.tick(env.snake_speed)	
+		env.fps.tick(env.snake_speed)
 	if run_nr == number_of_runs:
 		exit_program = True
 		env.close()
 		print(run_data)
-	to_buffer.append((s1,env.direction,reward,s2))
+	to_buffer.append((s1,curr_action,reward,s2))
 
 if write_data:
 	with open("src\ERB.txt", "w") as f:
