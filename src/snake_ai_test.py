@@ -101,8 +101,8 @@ def close():
 #Genstart funktion:
 def reset():
 	#Sætter tilfældig startkoordinat og æblekoordinat
-	start_pos = [random.randrange(4, (window_x//10)-10) * 10, random.randrange(1, (window_y//10)) * 10]
 	snake_length = 4
+	start_pos = [random.randrange(snake_length, (window_x//10)-10) * 10, random.randrange(1, (window_y//10)) * 10]
 	snake_body_local = [[start_pos[0] - 10*i,start_pos[1]] for i in range(snake_length)]
 	start_fruit = spawn_apple(snake_body_local)
 	#Gør score til 0 og angiver at der er et æble på brættet
