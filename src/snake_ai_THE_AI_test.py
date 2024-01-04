@@ -11,6 +11,7 @@ punish_no_apple = -1
 punish_death = -100
 reward_apple = 50
 to_buffer = []
+write_data = False
 
 def log_data(won, score, time, pos):
 	return won, score, time, pos
@@ -142,6 +143,8 @@ while not exit_program:
 		env.close()
 		print(run_data)
 	to_buffer.append((s1,env.direction,reward,s2))
-with open("src\ERB.txt", "w") as f:
-	for pair in to_buffer:
-		f.write(f"{str(pair)}\n")
+
+if write_data:
+	with open("src\ERB.txt", "w") as f:
+		for pair in to_buffer:
+			f.write(f"{str(pair)}\n")
