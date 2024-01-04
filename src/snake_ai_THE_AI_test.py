@@ -67,7 +67,8 @@ while not exit_program:
 		env.fruit_position = env.spawn_apple(env.snake_body)
 		if env.fruit_position == "WINNER": 
 			has_won = True
-			break #Indtil videre, vi skal have implementeret en vinderfunktion
+			env.snake_position, env.fruit_position,env.fruit_spawn,env.score,env.direction,env.change_to, env.snake_body, env.steps = env.reset() 
+			#Indtil videre, vi skal have implementeret en vinderfunktion
 
 		#Herunder den originale funktion for at spawne æblet (vælger tilfældigt)
 		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
@@ -75,7 +76,7 @@ while not exit_program:
 		
 		
 	env.fruit_spawn = True
-	env.game_window.fill(env.black)
+	if render: env.game_window.fill(env.black)
 	
 	#tegner slangen og æblet
 	if render:
