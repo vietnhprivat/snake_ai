@@ -2,17 +2,14 @@
 import snake_ai_test as env
 import pygame
 
-exit_program = False
 render = False
-has_won = False
 write_data = False
 number_of_runs = 2
-run_nr, run_data = 0, []
 punish_no_apple = -1
 punish_death = -100
 reward_apple = 50
-to_buffer = []
 
+exit_program, has_won, run_nr,run_data, to_buffer = False, False,0,[],[]
 def log_data(won, score, time, pos):
 	return won, score, time, pos
 
