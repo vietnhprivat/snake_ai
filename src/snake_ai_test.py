@@ -26,10 +26,17 @@ game_window = pygame.display.set_mode((window_x, window_y))
 # FPS (frames per second) controller
 fps = pygame.time.Clock()
 
+#Æble-spawn funktion
 def spawn_apple(snake_coordinates):
+	#Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
+	#Her får alle koordinater værdien 1
 	grid = [[1 for _ in range(int(window_x/10))] for _ in range(int(window_y/10))]
+	#Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
 	for x,y in snake_coordinates: grid[int(y/10)][int(x/10)] = 0
+	#Skaber en liste over de koordinater, der ikke er en slange på
 	free_coordinates = [(int(x), int(y)) for x in range(int(window_x/10)) for y in range(int(window_y/10)) if grid[y][x] == 1]
+	#Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
+	# Til at spawne æblet. Hvis ikke, har vi vundet
 	if free_coordinates: 
 		new_apple = random.choice(free_coordinates)
 		new_apple = new_apple[0]*10, new_apple[1]*10
@@ -89,11 +96,17 @@ def game_over():
 	quit()
 def close():
 	pygame.quit()
+
+#Genstart funktion:
 def reset():
+	#Sætter tilfældig startkoordinat og æblekoordinat
 	start_pos = [random.randrange(4, (window_x//10)-10) * 10, random.randrange(1, (window_y//10)) * 10]
 	start_fruit = [random.randrange(1, (window_x//10)) * 10, random.randrange(1, (window_y//10)) * 10]
+	#Gør score til 0 og angiver at der er et æble på brættet
 	fruit_spawn_local = True
 	score_local = 0
+	#Spawner slangen med at den går mod højre og skaber slangens krops koord
+	# Ud fra den tilfældige startposition. Returnerer en tuple
 	direction_local = 'RIGHT'
 	change_to_local = direction_local
 	snake_body_local = [[start_pos[0],start_pos[1]],
@@ -103,5 +116,7 @@ def reset():
 			]
 	steps = 0
 	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local, steps
-	
+
+
+#Initialiserer første spil
 snake_position, fruit_position, fruit_spawn, score, direction, change_to, snake_body, steps = reset()

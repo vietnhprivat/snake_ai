@@ -8,7 +8,8 @@ render = True
 has_won = False
 
 while not exit_program:
-	# handling key events
+	# Handling key events
+	# Hvad der sker når man trykker knapper. Kan erstates med modellens valg
 	for event in pygame.event.get():		
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_UP:
@@ -61,12 +62,15 @@ while not exit_program:
 	else:
 		env.snake_body.pop()
 	
-	
+	# Hvis der ikke er et æble på brættet, skal et nyt spawnes, 
+	# se environment for den funktion
 	if not env.fruit_spawn:
 		env.fruit_position = env.spawn_apple(env.snake_body)
 		if env.fruit_position == "WINNER": 
 			has_won = True
 			break #Indtil videre, vi skal have implementeret en vinderfunktion
+
+		#Herunder den originale funktion for at spawne æblet (vælger tilfældigt)
 		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
 							env.random.randrange(1, (env.window_y//10)) * 10]"""
 		
@@ -74,11 +78,13 @@ while not exit_program:
 	env.fruit_spawn = True
 	env.game_window.fill(env.black)
 	
-	for pos in env.snake_body:
-		pygame.draw.rect(env.game_window, env.green,
-						pygame.Rect(pos[0], pos[1], 10, 10))
-	pygame.draw.rect(env.game_window, env.red, pygame.Rect(
-		env.fruit_position[0], env.fruit_position[1], 10, 10))
+	#tegner slangen og æblet
+	if render:
+		for pos in env.snake_body:
+			pygame.draw.rect(env.game_window, env.green,
+							pygame.Rect(pos[0], pos[1], 10, 10))
+		pygame.draw.rect(env.game_window, env.red, pygame.Rect(
+			env.fruit_position[0], env.fruit_position[1], 10, 10))
 
 	# Game Over conditions
 	if env.snake_position[0] < 0 or env.snake_position[0] > env.window_x-10:
