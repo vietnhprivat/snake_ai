@@ -94,6 +94,7 @@ def game_over():
 	
 	# quit the program
 	quit()
+
 def close():
 	pygame.quit()
 
@@ -101,7 +102,9 @@ def close():
 def reset():
 	#Sætter tilfældig startkoordinat og æblekoordinat
 	start_pos = [random.randrange(4, (window_x//10)-10) * 10, random.randrange(1, (window_y//10)) * 10]
-	start_fruit = [random.randrange(1, (window_x//10)) * 10, random.randrange(1, (window_y//10)) * 10]
+	snake_length = 4
+	snake_body_local = [[start_pos[0] - 10*i,start_pos[1]] for i in range(snake_length)]
+	start_fruit = spawn_apple(snake_body_local)
 	#Gør score til 0 og angiver at der er et æble på brættet
 	fruit_spawn_local = True
 	score_local = 0
@@ -109,11 +112,6 @@ def reset():
 	# Ud fra den tilfældige startposition. Returnerer en tuple
 	direction_local = 'RIGHT'
 	change_to_local = direction_local
-	snake_body_local = [[start_pos[0],start_pos[1]],
-			[start_pos[0]-10, start_pos[1]],
-			[start_pos[0]-20, start_pos[1]],
-			[start_pos[0]-30, start_pos[1]]
-			]
 	steps = 0
 	return start_pos, start_fruit, fruit_spawn_local, score_local, direction_local, change_to_local, snake_body_local, steps
 
