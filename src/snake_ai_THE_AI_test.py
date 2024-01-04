@@ -102,9 +102,6 @@ while not exit_program:
 				env.time_steps) = env.reset()
 			#Indtil videre, vi skal have implementeret en vinderfunktion
 
-		#Herunder den originale funktion for at spawne æblet (vælger tilfældigt)
-		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
-							env.random.randrange(1, (env.window_y//10)) * 10]"""
 	env.fruit_spawn = True
 	
 	#tegner slangen og æblet
