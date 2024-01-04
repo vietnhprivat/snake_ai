@@ -2,8 +2,8 @@
 import snake_ai_test as env
 import pygame
 
-render = False
-write_data = False
+render = True
+write_data = True
 number_of_runs = 2
 punish_no_apple = -1
 punish_death = -100
@@ -13,28 +13,33 @@ exit_program, has_won, run_nr,run_data, to_buffer = False, False,0,[],[]
 def log_data(won, score, time, pos):
 	return won, score, time, pos
 
+def update_danger(spos,wx,wy,body):
+	danger = [0,0,0,0]
+	if spos[0] == 0: danger[3] = 1
+	if spos[0] == wx - 10: danger[2] = 1
+	if spos[1] == 0: danger[0] = 1
+	if spos[1] == wy - 10: danger[1] = 1
+
+	if [spos[0] + 10, spos[1]] in body: danger[2] = 1
+	if [spos[0] - 10, spos[1]] in body: danger[3] = 1
+	if [spos[0], spos[1] + 10] in body: danger[1] = 1
+	if [spos[0], spos[1] - 10] in body: danger[0] = 1
+	return danger
+
+def update_fruit(spos,fpos):
+	fruit = [0,0,0,0]
+	if spos[0] < fpos[0]: fruit[2] = 1
+	if spos[0] > fpos[0]: fruit[3] = 1
+	if spos[1] < fpos[1]: fruit[1] = 1
+	if spos[1] > fpos[1]: fruit[0] = 1
+	return fruit
 
 while not exit_program:
 	reward = punish_no_apple
 	# Udregner danger tuple
-	danger = [0,0,0,0] #Nord,syd,øst,vest
-	if env.snake_position[0] == 0: danger[3] = 1
-	if env.snake_position[0] == env.window_x - 10: danger[2] = 1
-	if env.snake_position[1] == 0: danger[0] = 1
-	if env.snake_position[1] == env.window_y - 10: danger[1] = 1
-
-	if [env.snake_position[0] + 10, env.snake_position[1]] in env.snake_body: danger[2] = 1
-	if [env.snake_position[0] - 10, env.snake_position[1]] in env.snake_body: danger[3] = 1
-	if [env.snake_position[0], env.snake_position[1] + 10] in env.snake_body: danger[1] = 1
-	if [env.snake_position[0], env.snake_position[1] - 10] in env.snake_body: danger[0] = 1
-
-	fruit = [0,0,0,0] #Nord, syd, øst, vest
-	if env.snake_position[0] < env.fruit_position[0]: fruit[2] = 1
-	if env.snake_position[0] > env.fruit_position[0]: fruit[3] = 1
-	if env.snake_position[1] < env.fruit_position[1]: fruit[1] = 1
-	if env.snake_position[1] > env.fruit_position[1]: fruit[0] = 1
+	danger = update_danger(env.snake_position,env.window_x,env.window_y,env.snake_body)
+	fruit = update_fruit(env.snake_position,env.fruit_position)
 	
-
 	s1 = danger, fruit
 	# Handling key events
 	# Hvad der sker når man trykker knapper. Kan erstates med modellens valg
@@ -140,22 +145,8 @@ while not exit_program:
 			reward = punish_death
 
 	# Udregner danger tuple
-	danger = [0,0,0,0] #Nord,syd,øst,vest
-	if env.snake_position[0] == 0: danger[3] = 1
-	if env.snake_position[0] == env.window_x - 10: danger[2] = 1
-	if env.snake_position[1] == 0: danger[0] = 1
-	if env.snake_position[1] == env.window_y - 10: danger[1] = 1
-
-	if [env.snake_position[0] + 10, env.snake_position[1]] in env.snake_body: danger[2] = 1
-	if [env.snake_position[0] - 10, env.snake_position[1]] in env.snake_body: danger[3] = 1
-	if [env.snake_position[0], env.snake_position[1] + 10] in env.snake_body: danger[1] = 1
-	if [env.snake_position[0], env.snake_position[1] - 10] in env.snake_body: danger[0] = 1
-
-	fruit = [0,0,0,0] #Nord, syd, øst, vest
-	if env.snake_position[0] < env.fruit_position[0]: fruit[2] = 1
-	if env.snake_position[0] > env.fruit_position[0]: fruit[3] = 1
-	if env.snake_position[1] < env.fruit_position[1]: fruit[1] = 1
-	if env.snake_position[1] > env.fruit_position[1]: fruit[0] = 1
+	danger = update_danger(env.snake_position,env.window_x,env.window_y,env.snake_body)
+	fruit = update_fruit(env.snake_position,env.fruit_position)
 
 	s2 = danger, fruit
 	if render:
