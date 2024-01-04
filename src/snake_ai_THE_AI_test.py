@@ -3,15 +3,15 @@ import snake_ai_test as env
 import pygame
 
 exit_program = False
-render = True
+render = False
 has_won = False
+write_data = False
 number_of_runs = 2
 run_nr, run_data = 0, []
 punish_no_apple = -1
 punish_death = -100
 reward_apple = 50
 to_buffer = []
-write_data = False
 
 def log_data(won, score, time, pos):
 	return won, score, time, pos
@@ -19,7 +19,26 @@ def log_data(won, score, time, pos):
 
 while not exit_program:
 	reward = punish_no_apple
-	s1 = env.snake_position, env.snake_body, env.fruit_position, env.direction
+	# Udregner danger tuple
+	danger = [0,0,0,0] #Nord,syd,øst,vest
+	if env.snake_position[0] == 0: danger[3] = 1
+	if env.snake_position[0] == env.window_x - 10: danger[2] = 1
+	if env.snake_position[1] == 0: danger[0] = 1
+	if env.snake_position[1] == env.window_y - 10: danger[1] = 1
+
+	if [env.snake_position[0] + 10, env.snake_position[1]] in env.snake_body: danger[2] = 1
+	if [env.snake_position[0] - 10, env.snake_position[1]] in env.snake_body: danger[3] = 1
+	if [env.snake_position[0], env.snake_position[1] + 10] in env.snake_body: danger[1] = 1
+	if [env.snake_position[0], env.snake_position[1] - 10] in env.snake_body: danger[0] = 1
+
+	fruit = [0,0,0,0] #Nord, syd, øst, vest
+	if env.snake_position[0] < env.fruit_position[0]: fruit[2] = 1
+	if env.snake_position[0] > env.fruit_position[0]: fruit[3] = 1
+	if env.snake_position[1] < env.fruit_position[1]: fruit[1] = 1
+	if env.snake_position[1] > env.fruit_position[1]: fruit[0] = 1
+	
+
+	s1 = danger, fruit
 	# Handling key events
 	# Hvad der sker når man trykker knapper. Kan erstates med modellens valg
 	for event in pygame.event.get():		
@@ -38,11 +57,8 @@ while not exit_program:
 				env.time_steps) = env.reset()
 			if event.key == pygame.K_q:
 				exit_program = True
-				env.close()
 	if event.type == pygame.QUIT:
 		exit_program = True
-		env.close()
-		break
 
 	# If two keys pressed simultaneously
 	# we don't want snake to move into two 
@@ -92,13 +108,11 @@ while not exit_program:
 		#Herunder den originale funktion for at spawne æblet (vælger tilfældigt)
 		"""env.fruit_position = [env.random.randrange(1, (env.window_x//10)) * 10, 
 							env.random.randrange(1, (env.window_y//10)) * 10]"""
-		
-		
 	env.fruit_spawn = True
-	if render: env.game_window.fill(env.black)
 	
 	#tegner slangen og æblet
 	if render:
+		env.game_window.fill(env.black)
 		for pos in env.snake_body:
 			pygame.draw.rect(env.game_window, env.green,
 							pygame.Rect(pos[0], pos[1], 10, 10))
@@ -130,7 +144,7 @@ while not exit_program:
 				env.time_steps) = env.reset()
 			run_nr += 1
 			reward = punish_death
-	s2 = env.snake_position, env.snake_body, env.fruit_position, env.direction
+	s2 = danger, fruit
 	if render:
 		#   displaying score continuously
 		env.show_score(1, env.white, 'times new roman', 20)
