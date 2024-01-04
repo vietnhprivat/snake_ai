@@ -1,8 +1,7 @@
 #AI VERSION
-import snake_ai_test as snake_ai_test
+import snake_ai_test as env
 import pygame
 
-env = snake_ai_test
 exit_program = False
 render = True
 has_won = False
