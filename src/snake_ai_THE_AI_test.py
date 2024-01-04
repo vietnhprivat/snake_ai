@@ -5,8 +5,20 @@ import pygame
 exit_program = False
 render = True
 has_won = False
+number_of_runs = 2
+run_nr, run_data = 0, []
+punish_no_apple = -1
+punish_death = -100
+reward_apple = 50
+to_buffer = []
+
+def log_data(won, score, time, pos):
+	return won, score, time, pos
+
 
 while not exit_program:
+	reward = punish_no_apple
+	s1 = env.snake_position, env.snake_body, env.fruit_position, env.direction
 	# Handling key events
 	# Hvad der sker når man trykker knapper. Kan erstates med modellens valg
 	for event in pygame.event.get():		
@@ -20,11 +32,14 @@ while not exit_program:
 			if event.key == pygame.K_RIGHT:
 				env.change_to = 'RIGHT'
 			if event.key == pygame.K_r:
-				env.snake_position, env.fruit_position,env.fruit_spawn,env.score,env.direction,env.change_to, env.snake_body, env.time_steps = env.reset() ########
+				(env.snake_position, env.fruit_position,env.fruit_spawn,
+	 			env.score,env.direction,env.change_to, env.snake_body, 
+				env.time_steps) = env.reset()
+			if event.key == pygame.K_q:
+				exit_program = True
+				env.close()
 	if event.type == pygame.QUIT:
 		exit_program = True
-		#env.game_over()
-		pygame.quit()
 		env.close()
 		break
 
@@ -57,6 +72,7 @@ while not exit_program:
 	env.snake_body.insert(0, list(env.snake_position))
 	if env.snake_position[0] == env.fruit_position[0] and env.snake_position[1] == env.fruit_position[1]:
 		env.score += 10
+		reward = reward_apple
 		env.fruit_spawn = False
 	else:
 		env.snake_body.pop()
@@ -67,7 +83,9 @@ while not exit_program:
 		env.fruit_position = env.spawn_apple(env.snake_body)
 		if env.fruit_position == "WINNER": 
 			has_won = True
-			env.snake_position, env.fruit_position,env.fruit_spawn,env.score,env.direction,env.change_to, env.snake_body, env.time_steps = env.reset() 
+			(env.snake_position, env.fruit_position,env.fruit_spawn,
+	 			env.score,env.direction,env.change_to, env.snake_body, 
+				env.time_steps) = env.reset()
 			#Indtil videre, vi skal have implementeret en vinderfunktion
 
 		#Herunder den originale funktion for at spawne æblet (vælger tilfældigt)
@@ -88,21 +106,42 @@ while not exit_program:
 
 	# Game Over conditions
 	if env.snake_position[0] < 0 or env.snake_position[0] > env.window_x-10:
-		env.game_over()
-		break
+		run_data.append(log_data(has_won,env.score,env.time_steps,env.snake_position))
+		(env.snake_position, env.fruit_position,env.fruit_spawn,
+	 			env.score,env.direction,env.change_to, env.snake_body, 
+				env.time_steps) = env.reset()
+		run_nr += 1
+		reward = punish_death
 	if env.snake_position[1] < 0 or env.snake_position[1] > env.window_y-10:
-		env.game_over()
-		break
+		run_data.append(log_data(has_won,env.score,env.time_steps,env.snake_position))
+		(env.snake_position, env.fruit_position,env.fruit_spawn,
+	 			env.score,env.direction,env.change_to, env.snake_body, 
+				env.time_steps) = env.reset()
+		run_nr += 1
+		reward = punish_death
 
 	# Touching the snake body
 	for block in env.snake_body[1:]:
 		if env.snake_position[0] == block[0] and env.snake_position[1] == block[1]:
-			env.game_over()
-			break
+			run_data.append(log_data(has_won,env.score,env.time_steps,env.snake_position))
+			(env.snake_position, env.fruit_position,env.fruit_spawn,
+	 			env.score,env.direction,env.change_to, env.snake_body, 
+				env.time_steps) = env.reset()
+			run_nr += 1
+			reward = punish_death
+	s2 = env.snake_position, env.snake_body, env.fruit_position, env.direction
 	if render:
 		#   displaying score continuously
 		env.show_score(1, env.white, 'times new roman', 20)
 		# Refresh game screen
 		pygame.display.update()
 		# Frame Per Second /Refresh Rate
-		env.fps.tick(env.snake_speed)
+		env.fps.tick(env.snake_speed)	
+	if run_nr == number_of_runs:
+		exit_program = True
+		env.close()
+		print(run_data)
+	to_buffer.append((s1,env.direction,reward,s2))
+with open("src\ERB.txt", "w") as f:
+	for pair in to_buffer:
+		f.write(f"{str(pair)}\n")
