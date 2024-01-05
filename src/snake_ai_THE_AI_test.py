@@ -1,7 +1,8 @@
-#AI VERSION
+# AI VERSION
 import snake_ai_test as env
 import pygame
 
+# Parameters
 render = True
 write_data = True
 number_of_runs = 2
@@ -13,6 +14,7 @@ exit_program, has_won, run_nr,run_data, to_buffer = False, False,0,[],[]
 def log_data(won, score, time, pos):
 	return won, score, time, pos
 
+# Observe Danger in the four possible next states
 def update_danger(spos,wx,wy,body):
 	danger = [0,0,0,0]
 	if spos[0] == 0: danger[3] = 1
@@ -26,6 +28,7 @@ def update_danger(spos,wx,wy,body):
 	if [spos[0], spos[1] - 10] in body: danger[0] = 1
 	return danger
 
+# Observe apple in the four possible next states
 def update_fruit(spos,fpos):
 	fruit = [0,0,0,0]
 	if spos[0] < fpos[0]: fruit[2] = 1
