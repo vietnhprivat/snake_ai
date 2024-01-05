@@ -4,7 +4,7 @@ import pygame
 
 # Parameters
 render = True
-write_data = True
+write_data = False
 number_of_runs = 2
 punish_no_apple = -1
 punish_death = -100
