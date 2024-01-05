@@ -11,7 +11,12 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Import environment and controls
+<<<<<<< HEAD
 from Classes.game_class import Snake_Game as sg, Data as dt
+=======
+import snake_ai_test as env
+import snake_ai_THE_AI_test as con
+>>>>>>> 3520e666fd02aa0667b783c67d7664ef382bc97b
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -26,27 +31,27 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Replay Memory
 Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward')) # encapsulate a single transition tuple of state, action, next_state, and reward.
+                        ('state', 'action', 'next_state', 'reward'))
 
-class ReplayMemory(object): # Defines a memory buffer that stores transitions collected from the environment. It can store a maximum number of transitions defined by capacity.
+class ReplayMemory(object):
 
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, *args): # Method to add a transition to the memory.
+    def push(self, *args):
         """Save a transition"""
         self.memory.append(Transition(*args))
 
-    def sample(self, batch_size): # Method to randomly sample a batch of transitions from the memory.
+    def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
-    def __len__(self): # Returns the current size of the memory.
+    def __len__(self):
         return len(self.memory)
 
-# Deep Q Network
-class DQN(nn.Module): # Inherits from nn.Module. Represents the neural network that approximates the Q-value function.
+# Q Network
+class DQN(nn.Module):
 
-    def __init__(self, n_observations, n_actions): # Sets up three linear layers to form a simple feed-forward neural network.
+    def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
@@ -54,44 +59,55 @@ class DQN(nn.Module): # Inherits from nn.Module. Represents the neural network t
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
-    def forward(self, x): # Defines the forward pass through the network with ReLU activations for the first two layers.
+    def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
     
 
-# Hyperparameters and utilities (Definitions of various constants used in training the network.)
-BATCH_SIZE = 128 # he number of transitions sampled from the replay buffer
-GAMMA = 0.99 # the discount factor
-EPS_START = 0.9 # the starting value of epsilon
-EPS_END = 0.05 # the final value of epsilon
-EPS_DECAY = 1000 # controls the rate of exponential decay of epsilon, higher means a slower decay
-TAU = 0.005 # the update rate of the target network
-LR = 1e-4 # LR is the learning rate of the ``AdamW`` optimizer
+# Hyperparameters and utilities
+# BATCH_SIZE is the number of transitions sampled from the replay buffer
+# GAMMA is the discount factor as mentioned in the previous section
+# EPS_START is the starting value of epsilon
+# EPS_END is the final value of epsilon
+# EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
+# TAU is the update rate of the target network
+# LR is the learning rate of the ``AdamW`` optimizer
+BATCH_SIZE = 128
+GAMMA = 0.99
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 1000
+TAU = 0.005
+LR = 1e-4
 
 # Get number of actions from gym action space ##############################
+<<<<<<< HEAD
 n_actions = 3
 # Get the number of state observations
 n_observations = 3
 # (Determines the size of the input and output layers of the network based on the environment and control setup.)
 
+=======
+n_actions = env.action_space.n
+############################################################################
+
+# Get the number of state observations
+n_observations = len(con.s1)
+>>>>>>> 3520e666fd02aa0667b783c67d7664ef382bc97b
 
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
-# (Two instances of the DQN network; one for the current policy and one for the target.)
 
-
-
-optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True) # Defines the optimization algorithm used to update the weights of the policy network.
-
+optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-steps_done = 0 # A counter for the number of steps taken (actions selected).
+steps_done = 0
 
 
-def select_action(state): # Function that chooses an action using epsilon-greedy policy. It either selects a random action or the best action according to the policy network.
+def select_action(state):
     global steps_done
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
@@ -107,10 +123,10 @@ def select_action(state): # Function that chooses an action using epsilon-greedy
         return torch.tensor([["""Skriv kode der udelukker 1 mulighed"""()]], device=device, dtype=torch.long)
 
 
-episode_durations = [] # A list to keep track of the duration of each episode.
+episode_durations = []
 
 
-def plot_durations(show_result=False): # A function for plotting the durations of episodes. It shows how long each episode lasted and optionally the average over the last 100 episodes.
+def plot_durations(show_result=False):
     plt.figure(1)
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
     if show_result:
@@ -138,7 +154,7 @@ def plot_durations(show_result=False): # A function for plotting the durations o
 
 # Training loop
             
-def optimize_model(): # he main training loop function. It samples a batch of transitions, computes the loss using Huber loss, and updates the weights of the policy network using backpropagation.
+def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)

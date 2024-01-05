@@ -1,15 +1,22 @@
 #AI VERSION
-import snake_ai_test as env
+import tab_q_snake_ai_test as env
 import pygame
+from collections import defaultdict 
+import numpy as np
+import pickle
+
+
 
 render = True
 write_data = False
-number_of_runs = 2
+training = False
+number_of_runs = 10000
 punish_no_apple = -1
 punish_death = -100
 reward_apple = 50
-
+count = 0
 exit_program, has_won, run_nr,run_data, to_buffer = False, False,0,[],[]
+
 def log_data(won, score, time, pos):
 	return won, score, time, pos
 
@@ -26,6 +33,26 @@ def update_danger(spos,wx,wy,body):
 	if [spos[0], spos[1] - 10] in body: danger[0] = 1
 	return danger
 
+def update_direction(input_direction):
+	output_direction = [0,0,0,0] # up, down, right, left
+	if input_direction == "UP": output_direction[0] = 1
+	if input_direction == "DOWN": output_direction[1] = 1
+	if input_direction == "RIGHT": output_direction[2] = 1
+	if input_direction == "LEFT": output_direction[3] = 1
+	return output_direction
+
+# Q-learning table initialize
+Q = defaultdict(lambda: [0., 0., 0.])
+
+if training == False:
+	file_path = 'tabular-q-learning\q-table.pkl'
+	with open(file_path, 'rb') as file:
+		loaded_Q = pickle.load(file)
+
+	Q.update(loaded_Q)
+
+
+
 def update_fruit(spos,fpos):
 	fruit = [0,0,0,0]
 	if spos[0] < fpos[0]: fruit[2] = 1
@@ -38,10 +65,51 @@ while not exit_program:
 	reward = punish_no_apple
 	# Udregner danger tuple
 	danger = update_danger(env.snake_position,env.window_x,env.window_y,env.snake_body)
+	direction = update_direction(env.direction)
 	fruit = update_fruit(env.snake_position,env.fruit_position)
+
 	
-	s1 = danger, fruit
-	# Handling key events
+	s1 = danger, direction, fruit
+	
+	# Q-table step 1. current stage
+	
+	qcurrent = Q[(tuple(danger), tuple(direction), tuple(fruit))]
+	action_index = np.argmax(qcurrent)
+	
+
+
+	# Snake direction Nord
+	if direction[0] == 1:
+		if action_index == 0: action = "UP"
+		if action_index == 1: action = "LEFT" 
+		if action_index == 2: action = "RIGHT"
+
+	
+	# Snake direction syd
+	if direction[1] == 1:
+		if action_index == 0: action = "DOWN"
+		if action_index == 1: action = "RIGHT" 
+		if action_index == 2: action = "LEFT"
+
+	# Snake direction øst
+	if direction[2] == 1:
+		if action_index == 0: action = "RIGHT"
+		if action_index == 1: action = "UP" 
+		if action_index == 2: action = "DOWN"		
+
+	# Snake direction VEST
+	if direction[3] == 1:
+		if action_index == 0: action = "LEFT"
+		if action_index == 1: action = "DOWN" 
+		if action_index == 2: action = "UP"	
+
+	env.change_to = action
+
+
+
+
+	# Handling 
+	# key events
 	# Hvad der sker når man trykker knapper. Kan erstates med modellens valg
 	for event in pygame.event.get():		
 		if event.type == pygame.KEYDOWN:
@@ -148,8 +216,13 @@ while not exit_program:
 	# Udregner danger tuple
 	danger = update_danger(env.snake_position,env.window_x,env.window_y,env.snake_body)
 	fruit = update_fruit(env.snake_position,env.fruit_position)
+	direction = update_direction(env.direction)
+	s2 = danger, direction, fruit
 
-	s2 = danger, fruit
+	qnew = Q[(tuple(danger), tuple(direction), tuple(fruit))]
+	gamma = 0.9
+	qcurrent[action_index] = reward + gamma * np.max(qnew)
+
 	if render:
 		#   displaying score continuously
 		env.show_score(1, env.white, 'times new roman', 20)
@@ -162,6 +235,18 @@ while not exit_program:
 		env.close()
 		print(run_data)
 	to_buffer.append((s1,curr_action,reward,s2))
+
+	## round timer 
+	# if run_nr%10 == 0:
+	# 	print(run_nr)
+
+
+
+
+file_path = 'tabular-q-learning\q-table.pkl'
+with open(file_path, 'wb') as file:
+    pickle.dump(dict(Q), file)
+
 
 if write_data:
 	with open("src\ERB.txt", "w") as f:
