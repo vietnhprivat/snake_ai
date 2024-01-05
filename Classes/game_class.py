@@ -199,10 +199,12 @@ class Snake_Game():
             self.reset()
             self.game_count +=1
             self.reward = self.punish_death
+            return True
         if self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
             self.reset()
             self.game_count +=1
             self.reward = self.punish_death
+            return True
 
         # Touching the snake body
         for block in self.snake_body[1:]:
@@ -210,6 +212,8 @@ class Snake_Game():
                 self.reset()
                 self.game_count +=1
                 self.reward = self.punish_death
+                return True
+        return False
 
     def get_reward(self):
         return self.reward
@@ -265,8 +269,8 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game()
-    n = 1
+    game = Snake_Game(write_data=True)
+    n = 2
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
@@ -276,10 +280,10 @@ if __name__ == "__main__":
         game.move()
         action = game.get_move()
         game.has_apple()
-        game.is_game_over()
+        game_over = game.is_game_over()
         reward = game.get_reward()
         s2 = game.get_state()
-        buffer.push(Transition(s1,action,reward,s2))
+        buffer.push(Transition(s1,action,reward,s2 if not game_over else None))
     buffer.write_to_file(game.write_data(), game)
 
 
