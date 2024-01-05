@@ -37,6 +37,7 @@ class Snake_Game():
         self.curr_action = self.direction
         self.reward_apple, self.punish_no_apple, self.punish_death = apple_reward, step_punish, death_punish
         self.reward = 0
+        self.action_space = [[1,0,0], [0,1,0], [0,0,1]]
 
         #Æble-spawn funktion
     def spawn_apple(self, snake_coordinates):
@@ -111,8 +112,6 @@ class Snake_Game():
         if input_direction == "LEFT": output_direction[3] = 1
         return output_direction
     
-    def action_space(self):
-        return [[1,0,0], [0,1,0], [0,0,1]]
     
     def move(self, action_index = None):
         self.reward = -1
@@ -305,12 +304,11 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game(write_data=True)
+    game = Snake_Game()
     n = 2
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
-    action_space = [1,0,0]
     while game.get_game_count() < n:
         s1 = game.get_state()
         game.move()
