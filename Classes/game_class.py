@@ -3,7 +3,7 @@ import random
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
-                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4):
+                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False):
         self.snake_speed = snake_speed
 
         # Window size
@@ -20,12 +20,13 @@ class Snake_Game():
 
         # Initialising pygame
         pygame.init()
-        self.should_write_data = write_data
+        self.should_write_data = force_write_data if force_write_data else write_data
+        self.force_write_data = force_write_data
         self.should_render = render
         self.game_count = 0
         # Initialise game window
         if self.should_render:
-            pygame.display.set_caption('GeeksforGeeks Snakes')
+            pygame.display.set_caption('Slitherin Pythons')
             self.game_window = pygame.display.set_mode((self.window_x, self.window_y))
 
         # FPS (frames per second) controller
@@ -216,7 +217,7 @@ class Snake_Game():
     def get_move(self):
         return self.direction
     def write_data(self):
-        return self.should_write_data
+        return self.force_write_data if self.force_write_data else self.should_write_data
     
 
 
@@ -227,28 +228,55 @@ class Data():
     def __add__(self, data_other):
         self.data.append(data_other)
 
-    def write_to_file(self, should_write):
+    def write_to_file(self, should_write, game):
         if should_write:
-            with open("src\ERB.txt", "w") as f:
-                for pair in self.data:
-                    f.write(f"{str(pair)}\n")
+            try:
+                with open("src\ERB.txt", "w") as f:
+                    for pair in self.data:
+                        f.write(f"{str(pair)}\n")
+                    print("Data logged.")
+            except FileNotFoundError:
+                if game.force_write_data:
+                    try:
+                        with open("ERB.txt", "w") as f:
+                            for pair in self.data:
+                                f.write(f"{str(pair)}\n")
+                            print("Data logged.")
+                        return
+                    except FileNotFoundError:
+                        with open("ERB.txt", "x") as f:
+                            for pair in self.data:
+                                f.write(f"{str(pair)}\n")
+                            print("ERB oprettet, data logged.")
+                        return
+                else:
+                    print("Datafil er ikke fundet. Angiv path til datafil herunder. Skriv \'nej\' for at annullere.\n"
+                      "skriv \'opret\' for at oprette \'ERB\':\n")
+                    choice = input("path: ").lower()
+                if choice == "nej":
+                    pass
+                elif choice == "opret":
+                    with open("ERB.txt", "x") as f:
+                        for pair in self.data:
+                            f.write(f"{str(pair)}\n")
+                        print("ERB oprettet, data logged.")
+                else:
+                    self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
     game = Snake_Game()
-    n = 2
+    n = 1
     buffer = Data()
     while game.get_game_count() < n:
-        if not game.fruit_spawn:
-            game.spawn_apple()
         s1 = game.get_state()
         game.move()
+        action = game.get_move()
         game.has_apple()
         game.is_game_over()
-        action = game.get_move()
         reward = game.get_reward()
         s2 = game.get_state()
         buffer + (s1,action,reward,s2)
-    buffer.write_to_file(game.write_data())
+    buffer.write_to_file(game.write_data(), game)
 
 
 
