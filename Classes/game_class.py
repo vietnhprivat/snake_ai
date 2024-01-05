@@ -1,5 +1,6 @@
 import pygame
 import random
+from collections import namedtuple
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
@@ -225,7 +226,7 @@ class Data():
     def __init__(self):
         self.data = []
 
-    def __add__(self, data_other):
+    def push(self, data_other):
         self.data.append(data_other)
 
     def write_to_file(self, should_write, game):
@@ -267,6 +268,9 @@ if __name__ == "__main__":
     game = Snake_Game()
     n = 1
     buffer = Data()
+    Transition = namedtuple("Transition",
+                            ("state","action","reward","next_state"))
+    action_space = ["UP","DOWN","LEFT","RIGHT"]
     while game.get_game_count() < n:
         s1 = game.get_state()
         game.move()
@@ -275,7 +279,7 @@ if __name__ == "__main__":
         game.is_game_over()
         reward = game.get_reward()
         s2 = game.get_state()
-        buffer + (s1,action,reward,s2)
+        buffer.push(Transition(s1,action,reward,s2))
     buffer.write_to_file(game.write_data(), game)
 
 
