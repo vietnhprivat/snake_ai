@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Import environment and controls
-from Classes.game_class import Snake_Game, Data
+from Classes.game_class import Snake_Game as sg, Data as dt
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -19,6 +19,9 @@ if is_ipython:
     from IPython import display
 
 plt.ion()
+
+# if GPU is to be used
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # Replay Memory
@@ -67,9 +70,9 @@ TAU = 0.005 # the update rate of the target network
 LR = 1e-4 # LR is the learning rate of the ``AdamW`` optimizer
 
 # Get number of actions from gym action space ##############################
-n_actions = env.action_space.n
+n_actions = 3
 # Get the number of state observations
-n_observations = len(con.s1)
+n_observations = 3
 # (Determines the size of the input and output layers of the network based on the environment and control setup.)
 
 
@@ -101,7 +104,7 @@ def select_action(state): # Function that chooses an action using epsilon-greedy
             # found, so we pick action with the larger expected reward.
             return policy_net(state).max(1).indices.view(1, 1)
     else:
-        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
+        return torch.tensor([["""Skriv kode der udelukker 1 mulighed"""()]], device=device, dtype=torch.long)
 
 
 episode_durations = [] # A list to keep track of the duration of each episode.
