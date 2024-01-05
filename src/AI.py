@@ -11,12 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Import environment and controls
-<<<<<<< HEAD
 from Classes.game_class import Snake_Game as sg, Data as dt
-=======
-import snake_ai_test as env
-import snake_ai_THE_AI_test as con
->>>>>>> 3520e666fd02aa0667b783c67d7664ef382bc97b
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -82,19 +77,11 @@ TAU = 0.005
 LR = 1e-4
 
 # Get number of actions from gym action space ##############################
-<<<<<<< HEAD
 n_actions = 3
 # Get the number of state observations
 n_observations = 3
 # (Determines the size of the input and output layers of the network based on the environment and control setup.)
 
-=======
-n_actions = env.action_space.n
-############################################################################
-
-# Get the number of state observations
-n_observations = len(con.s1)
->>>>>>> 3520e666fd02aa0667b783c67d7664ef382bc97b
 
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)
