@@ -100,12 +100,48 @@ class Snake_Game():
         return fruit
     
     def get_state(self):
-        return (self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), 
+        return (self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
                 self.update_fruit(self.snake_position, self.fruit_position))
     
-    def move(self, action = None):
+    def update_direction(self, input_direction):
+        output_direction = [0,0,0,0] # up, down, right, left
+        if input_direction == "UP": output_direction[0] = 1
+        if input_direction == "DOWN": output_direction[1] = 1
+        if input_direction == "RIGHT": output_direction[2] = 1
+        if input_direction == "LEFT": output_direction[3] = 1
+        return output_direction
+    
+    def action_space(self):
+        return [[1,0,0], [0,1,0], [0,0,1]]
+    
+    def move(self, action_index = None):
         self.reward = -1
-        if action:
+        if action_index:
+            direction_local = self.update_direction(self.direction)
+            if direction_local[0] == 1:
+                if action_index[0] == 1: action = "UP"
+                elif action_index[1] == 1: action = "LEFT" 
+                elif action_index[2] == 1: action = "RIGHT"
+
+        
+        # Snake direction syd
+            if direction_local[1] == 1:
+                if action_index[0] == 1: action = "DOWN"
+                elif action_index[1] == 1: action = "RIGHT" 
+                elif action_index[2] == 1: action = "LEFT"
+
+            # Snake direction øst
+            if direction_local[2] == 1:
+                if action_index[0] == 1: action = "RIGHT"
+                elif action_index[1] == 1: action = "UP" 
+                elif action_index[2] == 1: action = "DOWN"		
+
+            # Snake direction VEST
+            if direction_local[3] == 1:
+                if action_index[0] == 1: action = "LEFT"
+                elif action_index[1] == 1: action = "DOWN" 
+                elif action_index[2] == 1: action = "UP"	
+
             self.change_to = action
         else:
             for event in pygame.event.get():		
@@ -274,7 +310,7 @@ if __name__ == "__main__":
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
-    action_space = ["UP","DOWN","LEFT","RIGHT"]
+    action_space = [1,0,0]
     while game.get_game_count() < n:
         s1 = game.get_state()
         game.move()
