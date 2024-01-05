@@ -107,7 +107,7 @@ def select_action(state):
             # found, so we pick action with the larger expected reward.
             return policy_net(state).max(1).indices.view(1, 1)
     else:
-        return torch.tensor([[sg.action_space.sample()]], device=device, dtype=torch.long)
+        return torch.tensor((random.choice(sg.action_space)), device=device, dtype=torch.long)
 
 
 episode_durations = []
