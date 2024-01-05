@@ -11,8 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Import environment and controls
-import snake_ai_test as env
-import snake_ai_THE_AI_test as con
+from Classes.game_class import Snake_Game, Data
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -41,7 +40,7 @@ class ReplayMemory(object): # Defines a memory buffer that stores transitions co
     def __len__(self): # Returns the current size of the memory.
         return len(self.memory)
 
-# Q Network
+# Deep Q Network
 class DQN(nn.Module): # Inherits from nn.Module. Represents the neural network that approximates the Q-value function.
 
     def __init__(self, n_observations, n_actions): # Sets up three linear layers to form a simple feed-forward neural network.
@@ -60,7 +59,7 @@ class DQN(nn.Module): # Inherits from nn.Module. Represents the neural network t
 
 # Hyperparameters and utilities (Definitions of various constants used in training the network.)
 BATCH_SIZE = 128 # he number of transitions sampled from the replay buffer
-GAMMA = 0.99 # the discount factor as mentioned in the previous section
+GAMMA = 0.99 # the discount factor
 EPS_START = 0.9 # the starting value of epsilon
 EPS_END = 0.05 # the final value of epsilon
 EPS_DECAY = 1000 # controls the rate of exponential decay of epsilon, higher means a slower decay
