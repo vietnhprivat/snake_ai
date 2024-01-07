@@ -140,15 +140,16 @@ class ModelOptimizer():
 
         # Laver en named tuple med de rewards, der er blevet brugt
         for model in self.sorted_data[:top+1]:
-            best.append([self.rewards_when_sort(model[5], model[6], model[7]), f"SCORE: {round(model[1])} ", 
-                         f"TIME: {round(model[2])}", f"Model number: {model[0]}"])
+            best.append([f"STEP Reward: {model[5]}", f"APPLE Reward: {model[6]}", f"DEATH Reward: {model[7]}", 
+                         f"SCORE: {round(model[1])} ", f"TIME: {round(model[2])}", f"Model number: {model[0]}"])
         return best
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
     model_optimizer = ModelOptimizer(2) 
 
-    # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på
+    # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
+    # Slå double_check fra for bare at træne
     model_optimizer.Train_Models(1200,400, double_check=True)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
