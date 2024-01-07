@@ -16,6 +16,7 @@ class Q_learning:
         self.training = training
         self.file_path = file_path
         self.gamma = gamma
+        
         ## Hvis den ikke skal træne, åbner den filen med navnet som er angivet
         if not self.training:
             try:
