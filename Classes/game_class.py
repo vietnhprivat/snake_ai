@@ -4,7 +4,7 @@ from collections import namedtuple
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
-                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False):
+                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = False):
         self.snake_speed = snake_speed
 
         # Window size
@@ -18,6 +18,7 @@ class Snake_Game():
         self.green = pygame.Color(0, 255, 0)
         self.blue = pygame.Color(0, 0, 255)
         self.snake_length = snake_length
+        self.kill_stuck = kill_stuck
 
         # Initialising pygame
         pygame.init()
@@ -38,6 +39,8 @@ class Snake_Game():
         self.reward_apple, self.punish_no_apple, self.punish_death = apple_reward, step_punish, death_punish
         self.reward = 0
         self.action_space = [[1,0,0], [0,1,0], [0,0,1]]
+        self.stuck_step = 0
+        self.stuck = False
 
         #Æble-spawn funktion
     def spawn_apple(self, snake_coordinates):
@@ -67,10 +70,11 @@ class Snake_Game():
         fruit_spawn_local = True
         score_local = 0
         #Spawner slangen med at den går mod højre og skaber slangens krops koord
-        # Ud fra den tilfældige startposition. Returnerer en tuple
+        # Ud fra den tilfældige startposition.
         direction_local = 'RIGHT'
         change_to_local = direction_local
         time_steps = 0
+        self.stuck, self.stuck_step = False, 0
         (self.snake_position, self.fruit_position,self.fruit_spawn,
             self.score,self.direction,self.change_to, 
             self.snake_body, self.time_steps) = (start_pos, start_fruit,
@@ -115,6 +119,7 @@ class Snake_Game():
     
     def move(self, action_index = None):
         self.reward = -1
+        self.stuck_step += 1
         if action_index:
             direction_local = self.update_direction(self.direction)
             if direction_local[0] == 1:
@@ -182,14 +187,20 @@ class Snake_Game():
         self.snake_body.insert(0, list(self.snake_position))
         if self.should_render: self.render()
 
+    def get_time_for_apple(self):
+        return self.stuck_step
+
     def has_apple(self):
         # Snake body growing mechanism
         # if fruits and snakes collide then scores
         # will be incremented by 10
+        time_taken = False
         if self.snake_position[0] == self.fruit_position[0] and self.snake_position[1] == self.fruit_position[1]:
             self.score += 10
             self.reward = self.reward_apple
             self.fruit_spawn = False
+            time_taken = self.get_time_for_apple()
+            self.stuck_step = 0
         else:
             self.snake_body.pop()
 
@@ -199,6 +210,7 @@ class Snake_Game():
                 self.has_won = True
                 self.reset()
         self.fruit_spawn = True
+        return time_taken if time_taken else None
 
     def render(self):
 
@@ -248,7 +260,13 @@ class Snake_Game():
                 self.game_count +=1
                 self.reward = self.punish_death
                 return True
+        if self.kill_stuck and self.is_stuck():
+            self.reset()
+            self.game_count +=1
+            self.reward = self.punish_death
+            return True
         return False
+    
 
     def get_reward(self):
         return self.reward
@@ -259,16 +277,31 @@ class Snake_Game():
     def write_data(self):
         return self.force_write_data if self.force_write_data else self.should_write_data
     
+    def is_stuck(self):
+        if self.stuck_step > len(self.snake_body)*100: return True
+        else: return False
+
+    def is_game_over_bool(self):
+        if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
+            return True
+        if self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
+            return True
+        if self.kill_stuck and self.is_stuck():
+            return True
+        for block in self.snake_body[1:]:
+            if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
+                return True
+        return False
 
 
 class Data():
     def __init__(self):
         self.data = []
 
-    def push(self, data_other):
+    def commit(self, data_other):
         self.data.append(data_other)
 
-    def write_to_file(self, should_write, game):
+    def push(self, should_write, game):
         if should_write:
             try:
                 with open("src\ERB.txt", "w") as f:
@@ -317,8 +350,8 @@ if __name__ == "__main__":
         game_over = game.is_game_over()
         reward = game.get_reward()
         s2 = game.get_state()
-        buffer.push(Transition(s1,action,reward,s2 if not game_over else None))
-    buffer.write_to_file(game.write_data(), game)
+        buffer.commit(Transition(s1,action,reward,s2 if not game_over else None))
+    buffer.push(game.write_data(), game)
 
 
 
