@@ -35,7 +35,22 @@ class ModelOptimizer():
         self.rewards_when_sort = namedtuple('Rewards',
                                             ('step_reward','apple_reward','death_reward'))
 
-    def Train_Models(self,runs,runs_to_look_at):
+        # Træner modeller. double_check kan vælges til True hvis du ikke vil risikere at sætte en stor sim igang.
+        # Hvis double check er slået til, får man også mulighed for selv at vælge rewards.
+    def Train_Models(self,runs,runs_to_look_at, double_check=False):
+        apple_choice, step_choice = False, False
+        if double_check:
+            answer = input("Er du sikker på at du vil træne nu? Skriv \'nej' for at annullere, ellers skriv \'ja\': ").lower()
+            if answer == "nej": return
+            answer = input("Vælg reward for æble. Skriv \'skip\' for at vælge tilfældigt: ").lower()
+            if answer == "skip": pass
+            else: 
+                apple_choice = int(answer)
+                answer = input("Vælg reward for step. Skriv \'skip\' for at vælge tilfældigt: ").lower()
+                if answer == "skip": pass
+                else: step_choice = int(answer)
+
+
         try:
             with open(self.metric_folder_path, "r") as f:
                 data = f.read().splitlines()
@@ -45,8 +60,8 @@ class ModelOptimizer():
         for i in range(self.models_to_train):
 
             # Vælg tilfældig straf for at tage et skridt og tilfældig reward for at fange æble
-            step_reward = -random.randint(0,10)
-            apple_reward = random.randint(10,100)
+            step_reward = step_choice if step_choice else -random.randint(0,10)
+            apple_reward = apple_choice if apple_choice else random.randint(10,100)
 
             # Laver en path, hvor selve modellen gemmes.
             model_file_path = f'model_{i+models_in_file}_step_{step_reward}_apple_{apple_reward}.pkl'
@@ -131,10 +146,10 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(1) 
+    model_optimizer = ModelOptimizer(2) 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på
-    #model_optimizer.Train_Models(1200,400)
+    model_optimizer.Train_Models(1200,400, double_check=True)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter

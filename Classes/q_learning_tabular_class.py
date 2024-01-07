@@ -16,7 +16,7 @@ class Q_learning:
         self.training = training
         self.file_path = file_path
         self.gamma = gamma
-        
+
         ## Hvis den ikke skal træne, åbner den filen med navnet som er angivet
         if not self.training:
             try:
@@ -97,5 +97,5 @@ class Q_learning:
 if __name__ == "__main__":
     game = Snake_Game(snake_speed=150,kill_stuck=True, render=True)
     buffer = Data()
-    model = Q_learning(game, buffer=buffer, training=False, file_path='Classes\optim_of_tab_q-learn\model_files\model_10_step_-9_apple_72.pkl')
+    model = Q_learning(game, buffer=buffer, training=False, file_path='Classes\optim_of_tab_q-learn\model_files\model_15_step_-10_apple_93.pkl')
     model.train(10)
