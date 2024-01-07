@@ -61,21 +61,30 @@ class ModelOptimizer():
         # Når alle modeller er trænet, laver optimizeren en fil, hvor gns score, tid osv. for alle modeller gemmes
         self.optimizer.push()
 
+
+        # Datahelper hjælper med at konvertere info fra datafil fra string til float
+        # Type er som udgangspunkt float, men kan ændres til andet
     def datahelper(self, pointer, model, type=float):
+        # Data ligger i fil som strings.
         val = ""
+
+        # Vi starter ved vores pointer og går igennem alle karakterer i linjen fra der hvor pointeren nu er.
         for num in model[pointer:]:
-            for num in model[pointer:]:
-                if not num == "," and not pointer == len(model)-1: 
-                    val += num
-                    pointer +=1
-                else: return type(val), pointer
+            # Tjek om den karakter, vi kigger på er et komma. Hvis det ikke er, skal vi
+            # tilføje karakteren til vores output og flytte pointeren én hen. Hvis ikke,
+            # er det fordi at der er et adskildelseskomma, og vi returnerer den værdi, vi har lavet, og hvor pointeren nu er.
+            # Hvis vi er ved slutningen af linjen, skal vi også returnere.
+            if not num == "," and not pointer == len(model)-1: 
+                val += num
+                pointer +=1
+            else: return type(val), pointer
 
     def get_data(self):
         with open(self.metric_folder_path, "r") as f:
             data_raw = f.read().splitlines()
         data = []
         for model in data_raw:
-            # Finder modellens index. Første modelindextal har indexet 14 i strengen.
+            # Pointer starter som 14, hvor første værdi begynder
             pointer = 14
             index, pointer = self.datahelper(pointer,model)
             # Pointer er nu indekset af kommaet, der adskilder index og mean. Der er 13 indtil score begynder
@@ -121,9 +130,17 @@ class ModelOptimizer():
         return best
 
 if __name__ == "__main__":
-    model_optimizer = ModelOptimizer(1)
+    # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
+    model_optimizer = ModelOptimizer(1) 
+
+    # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på
     #model_optimizer.Train_Models(1200,400)
-    model_optimizer.sort_data("SCORE")
-    top_rewards = model_optimizer.get_rewards(10)
+
+    # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
+    # på den parameter
+    model_optimizer.sort_data("SCORE") 
+
+    # Tager de top X bedste modeller indenfor den valgte parameter og viser dem.
+    top_rewards = model_optimizer.get_rewards(10)  
     for rewards in top_rewards:
         print(rewards)

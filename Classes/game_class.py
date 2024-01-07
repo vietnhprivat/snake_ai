@@ -260,6 +260,8 @@ class Snake_Game():
                 self.game_count +=1
                 self.reward = self.punish_death
                 return True
+            
+        # Tjekker om slangen sidder fast og slutter hvis den gør.
         if self.kill_stuck and self.is_stuck():
             self.reset()
             self.game_count +=1
@@ -277,10 +279,14 @@ class Snake_Game():
     def write_data(self):
         return self.force_write_data if self.force_write_data else self.should_write_data
     
+        # Tjekker, om slangen sidder fast. Jo længere den er, jo længere tid har den til at finde 
+        # Et nyt æble. Hvis den sidder fast, afsluttes spillet oppe i is_game_over
     def is_stuck(self):
         if self.stuck_step > len(self.snake_body)*100: return True
         else: return False
 
+        # Gør det samme som is_game_over, men ændrer ikke på spillet. Kan bruges til at finde ud af,
+        # om spillet er ovre uden at genstarte og resette værdier.
     def is_game_over_bool(self):
         if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
             return True

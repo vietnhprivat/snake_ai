@@ -46,7 +46,8 @@ class RewardOptimizer():
         else: mean_time_apple = sum(self.time_between_apples)/len(self.time_between_apples)
         return mean_score, mean_time_apple
 
-        # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen
+        # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
+        # Sender også data om spil/model som fx de rewards, der blev brugt
     def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish):
         to_append = self.metrics(index, calculated_metrics[0], calculated_metrics[1], runs, file_path, 
                                  step_punish, apple_reward, death_punish)
