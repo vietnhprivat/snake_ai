@@ -221,6 +221,12 @@ class Snake_Game():
                 self.reset()
         self.fruit_spawn = True
         return time_taken if time_taken else None
+    
+    def toggle_rendering(self):
+        self.should_render = not self.should_render
+        if self.should_render:
+            self.snake_speed = 25
+        else: self.snake_speed = 500
 
     def render(self):
         if self.pygame is None:
