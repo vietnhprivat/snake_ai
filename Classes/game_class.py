@@ -1,6 +1,7 @@
 import pygame
 import random
 from collections import namedtuple
+import torch
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
@@ -104,7 +105,10 @@ class Snake_Game():
         if spos[1] > fpos[1]: fruit[0] = 1
         return fruit
     
-    def get_state(self):
+    def get_state(self, is_tensor=False):
+        if is_tensor:
+            return torch.tensor([self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
+                self.update_fruit(self.snake_position, self.fruit_position)])
         return (self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
                 self.update_fruit(self.snake_position, self.fruit_position))
     
