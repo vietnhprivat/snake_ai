@@ -1,4 +1,5 @@
 from collections import namedtuple
+import numpy as np
 
 #### Dette er RewardOptimizeren. Den bruges til at holde styr på hvordan modellerne klarer sig.
 # undervejs i et run vil den holde styr på gennemsnitsscore og tid. Når modellen/modellerne er trænede,
@@ -21,10 +22,12 @@ class RewardOptimizer():
         
         #Stack er en liste over alle modellers metrics
         self.stack = []
+        self.look_at = None
 
         # Clean data kaldes inden metrics udregnes. Den udvælger hvor mange, af de sidste
         # runs, der skal tages i betragtning når vi udregner gns
     def clean_data(self,look_at):
+        self.look_at = look_at
         self.scores = self.scores[look_at:]
         self.time_between_apples = self.time_between_apples[look_at:]
 
@@ -40,10 +43,17 @@ class RewardOptimizer():
 
         # Kaldes når træning er færdig. Udregner gennemsnitlig score og tid
     def calculate_metrics(self):
+        self.scores = np.array(self.scores)
+        self.time_between_apples = np.array(self.time_between_apples)
         if len(self.scores) == 0: mean_score = 0
-        else: mean_score = sum(self.scores)/len(self.scores)
+        else: mean_score = np.mean(self.scores)
         if len(self.time_between_apples) == 0: mean_time_apple = 0
-        else: mean_time_apple = sum(self.time_between_apples)/len(self.time_between_apples)
+        else: mean_time_apple = np.mean(self.time_between_apples)
+        score_var = np.var(self.scores)
+        apple_var = np.var(self.time_between_apples)
+        if self.look_at is not None:
+            pass
+        KI_score = [mean_score - 1.96* np.sqrt(score_var)/np.sqrt(self.look_at)]
         return mean_score, mean_time_apple
 
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
