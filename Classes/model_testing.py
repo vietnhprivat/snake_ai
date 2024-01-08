@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+import numpy as np
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -33,9 +34,13 @@ class QTrainer:
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):
+        state = np.array(state)
         state = torch.tensor(state, dtype=torch.float)
+        next_state = np.array(next_state)
         next_state = torch.tensor(next_state, dtype=torch.float)
+        action = np.array(action)
         action = torch.tensor(action, dtype=torch.long)
+        reward = np.array(reward)
         reward = torch.tensor(reward, dtype=torch.float)
         # (n, x)
 
