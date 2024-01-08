@@ -1,10 +1,11 @@
 import pygame
 import random
+import numpy as np
 from collections import namedtuple
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
-                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = False):
+                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True):
         self.snake_speed = snake_speed
 
         # Window size
@@ -131,9 +132,21 @@ class Snake_Game():
         return fruit
     
     def get_state(self):
-        return (self.update_danger(self.snake_position, self.window_x,self.window_y,
-                                   self.snake_body), self.update_direction(self.direction), 
-                self.update_fruit(self.snake_position, self.fruit_position))
+        # Updating states
+        danger_state = self.update_danger(self.snake_position, self.window_x,self.window_y, self.snake_body)
+        direction_state = self.update_direction(self.direction)
+        fruit_state = self.update_fruit(self.snake_position, self.fruit_position)
+
+        # Concatenating states and converting into array
+        # state_array = np.array([danger_state, direction_state, fruit_state])
+
+        return np.concatenate((danger_state,direction_state, fruit_state), dtype=int)
+
+        # # Old code
+        # return (self.update_danger(self.snake_position, self.window_x,self.window_y,
+        #                            self.snake_body), self.update_direction(self.direction), 
+        #         self.update_fruit(self.snake_position, self.fruit_position))
+    
     
     def update_direction(self, input_direction):
         output_direction = [0,0,0,0] # up, down, right, left
@@ -295,6 +308,35 @@ class Snake_Game():
             self.reward = self.punish_death
             return True
         return False
+    
+    def game_over(self):
+        if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
+            #run_data.append(log_data(has_won,env.score,env.time_steps,env.snake_position))
+            # self.reset()
+            # self.game_count +=1
+            self.reward = self.punish_death
+            return True
+        if self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
+            # self.reset()
+            # self.game_count +=1
+            self.reward = self.punish_death
+            return True
+
+        # Touching the snake body
+        for block in self.snake_body[1:]:
+            if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
+                # self.reset()
+                # self.game_count +=1
+                self.reward = self.punish_death
+                return True
+            
+        # Tjekker om slangen sidder fast og slutter hvis den gør.
+        if self.kill_stuck and self.is_stuck():
+            # self.reset()
+            # self.game_count +=1
+            self.reward = self.punish_death
+            return True
+        return False           
     
 
     def get_reward(self):
