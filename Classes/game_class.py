@@ -34,11 +34,12 @@ class Snake_Game():
             self.blue = self.pygame.Color(0, 0, 255)
             self.pygame.display.set_caption('Slitherin Pythons')
             self.game_window = self.pygame.display.set_mode((self.window_x, self.window_y))
+            self.toggle_possible = True
             # defining colors
 
         # FPS (frames per second) controller
             self.fps = self.pygame.time.Clock()
-        else: self.pygame = None
+        else: self.pygame, self.toggle_possible = None, False
 
         self.reset()
         self.curr_action = self.direction
