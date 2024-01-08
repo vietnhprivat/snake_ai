@@ -6,6 +6,9 @@ from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
 from model_testing import Linear_QNet, QTrainer
 from helper_testing import plot
+import pygame
+
+pygame.init()
 
 MAX_MEMORY = 10_000
 BATCH_SIZE = 1000
@@ -14,12 +17,14 @@ LR = 0.001
 class Agent:
     def __init__(self):
         self.n_games = 0
-        self.epsilon = 0  # randomness
+        self.epsilon = 1  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
         self.model = Linear_QNet(11, 256, 3)  
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+        self.epsilon_decay = 0.99999  # Decaying rate per game
+        self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
         # Extracting the head of the snake and the fruit position
@@ -70,15 +75,16 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        # random moves: tradeoff exploration / exploitation
-        self.epsilon = 1500 - self.n_games
+        # Update epsilon value
+        self.epsilon = max(self.epsilon_min, self.epsilon_decay * self.epsilon)  # decay epsilon
+        
         final_move = [0,0,0]
-        if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
+        if random.random() < self.epsilon:
+            move = random.randint(0, 2)  # Assuming 3 actions
             final_move[move] = 1
         else:
-            state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state0)
+            state_tensor = torch.tensor(state, dtype=torch.float)
+            prediction = self.model(state_tensor)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
@@ -91,15 +97,20 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=150, render=False, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=95, step_punish=-0.5, snake_length=4)
+    game = Snake_Game(snake_speed=200, render=False, kill_stuck=True, window_x=300, window_y=300,
+                      apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
     reward_optim = RewardOptimizer('Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
     while True:
-        # if agent.n_games == 50:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:  # Detect spacebar press
+                    game.toggle_rendering()  # Toggle rendering and speed
+
+        # if agent.n_games == 2000:
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
-        #               apple_reward=95, step_punish=-0.5, snake_length=5)
+        #               apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
         state_old = agent.get_state(game)
         final_move = agent.get_action(state_old)
         game.move(final_move)  # make a move
