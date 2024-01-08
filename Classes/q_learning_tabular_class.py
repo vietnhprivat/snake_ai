@@ -97,5 +97,5 @@ class Q_learning:
 if __name__ == "__main__":
     game = Snake_Game(snake_speed=150,kill_stuck=True, render=True)
     buffer = Data()
-    model = Q_learning(game, buffer=buffer, training=False, file_path='Classes\optim_of_tab_q-learn\model_files\model_15_step_-10_apple_93.pkl')
+    model = Q_learning(game, buffer=buffer, training=False, file_path='Classes\optim_of_tab_q-learn\model_files\model_4_step_-7_apple_35.pkl')
     model.train(10)
