@@ -66,6 +66,9 @@ class RewardOptimizer():
                                  step_punish, apple_reward, death_punish)
         self.stack.append(to_append)
 
+    def clear_commits(self):
+        self.stack = []
+
         #Push sender stacken til en fil
     def push(self):
         with open(self.file_path, "a") as f:
