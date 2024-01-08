@@ -171,7 +171,7 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(2) 
+    model_optimizer = ModelOptimizer(1) 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
