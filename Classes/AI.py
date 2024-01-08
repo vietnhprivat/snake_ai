@@ -178,7 +178,7 @@ def optimize_model():
     # state value or 0 in case the state was final.
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
     with torch.no_grad():
-        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
+        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values[0]
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -197,12 +197,12 @@ def optimize_model():
 if torch.cuda.is_available():
     num_episodes = 600
 else:
-    num_episodes = 50
+    num_episodes = 100
 
 for i_episode in range(num_episodes):
     counter = 0
     # Initialize the environment and get it's state
-    game_env = Snake_Game(kill_stuck=True, snake_speed=100)
+    game_env = Snake_Game(kill_stuck=True, snake_speed=200, window_x=300, window_y=300, snake_length=5)
     state = game_env.get_state(is_tensor=True)
     state_tensor = torch.tensor(state, dtype=torch.float, device=device).unsqueeze(0)
     while game_env.get_game_count() < BATCH_SIZE:
@@ -229,7 +229,7 @@ for i_episode in range(num_episodes):
 
         if done:
             episode_durations.append(counter + 1)
-            plot_durations()
+            #plot_durations()
 
             # Soft update of the target network's weights
             # θ_target = τ*θ_local + (1 - τ)*θ_target
