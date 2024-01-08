@@ -79,9 +79,9 @@ TAU = 0.005
 LR = 1e-4
 
 # Get number of actions from gym action space ##############################
-n_actions = len(game_env.action_space)
+n_actions = 1 # len(game_env.action_space)
 # Get the number of state observations
-n_observations = 4       # sum(len(part) for part in game_env.get_state()) # (danger = 4, fruit = 4, moves = 4)
+n_observations = 4      # sum(len(part) for part in game_env.get_state()) # (danger = 4, fruit = 4, moves = 4)
 # (Determines the size of the input and output layers of the network based on the environment and control setup.)
 
 
@@ -158,6 +158,10 @@ def optimize_model():
                                         batch.next_state)), device=device, dtype=torch.bool)
     non_final_next_states = torch.cat([s for s in batch.next_state
                                                 if s is not None])
+    
+    for state in batch.state:
+        print(state.shape, state)
+
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
@@ -198,11 +202,11 @@ else:
 for i_episode in range(num_episodes):
     # Initialize the environment and get it's state
     game_env.reset()
-    state = game_env.get_state()
+    state = game_env.get_state(is_tensor = True)
     state_tensor = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     for t in count():
         action = select_action(state)
-        game_env.move(action.tolist())
+        game_env.move(game_env.action_space[action])
         reward = game_env.get_reward()
         reward = torch.tensor([reward], device = device)
         done = game_env.is_game_over()
@@ -210,7 +214,7 @@ for i_episode in range(num_episodes):
         if done:
             next_state = None
         else:
-            next_state = torch.tensor(game_env.get_state(), dtype=torch.float32, device=device).unsqueeze(0)
+            next_state = torch.tensor(game_env.get_state(is_tensor = True), dtype=torch.float32, device=device).unsqueeze(0)
 
         # Store the transition in memory
         memory.push(state, action, next_state, reward)
