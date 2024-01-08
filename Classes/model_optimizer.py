@@ -43,11 +43,11 @@ class ModelOptimizer():
             answer = input("Er du sikker på at du vil træne nu? Skriv \'nej' for at annullere, ellers skriv \'ja\': ").lower()
             if answer == "nej": return
             answer = input("Vælg reward for æble. Skriv \'skip\' for at vælge tilfældigt: ").lower()
-            if answer == "skip": pass
+            if answer == "skip" or answer == "s": pass
             else: 
                 apple_choice = int(answer)
                 answer = input("Vælg reward for step. Skriv \'skip\' for at vælge tilfældigt: ").lower()
-                if answer == "skip": pass
+                if answer == "skip" or answer == "s": pass
                 else: step_choice = int(answer)
 
 
@@ -92,7 +92,24 @@ class ModelOptimizer():
             if not num == seperator and not pointer == len(model)-1: 
                 val += num
                 pointer +=1
-            else: return type(val), pointer
+            else: 
+                if not type == list: return type(val), pointer
+                else:
+                    index_0 = ""
+                    com = -1
+                    for i, char in enumerate(val[1:]):
+                        if char == ",": 
+                            com = i + 1
+                            break
+                        index_0 += char
+                    index_0 = float(index_0)
+                    index_1 = ""
+                    for char in val[com+1:]:
+                        if char == "]": break
+                        index_1 += char
+                    index_1 = float(index_1)
+                    return [index_0,index_1], pointer
+
 
     def get_data(self):
         with open(self.metric_folder_path, "r") as f:
@@ -125,7 +142,7 @@ class ModelOptimizer():
             apple_reward, pointer = self.datahelper(pointer,model)
             pointer += 15
             death_punish, pointer = self.datahelper(pointer,model)
-            data.append((index, mean_score, mean_time, runs, file_path, step_punish, apple_reward, death_punish))
+            data.append([index, mean_score, mean_time, runs, file_path, step_punish, apple_reward, death_punish])
         return data
     
     def sort_data(self, index_to_sort_by):
@@ -138,7 +155,6 @@ class ModelOptimizer():
         # Sorterer ud fra valgt sorteringsmetode.
         # Reverse sort er True hvis index er 1, altså hvis vi kigger på score. Hvis vi kigger på tid, er den false,
         # så lavere tider kommer først.
-        # TODO: FIX SÅ KI MEDREGNES HER
         self.sorted_data.sort(key=lambda x: x[index], reverse=index==1)
         return self.sorted_data
     
@@ -150,7 +166,7 @@ class ModelOptimizer():
         # Laver en named tuple med de rewards, der er blevet brugt
         for model in self.sorted_data[:top+1]:
             best.append([f"STEP Reward: {model[5]}", f"APPLE Reward: {model[6]}", f"DEATH Reward: {model[7]}", 
-                         f"SCORE: {round(model[1])} ", f"TIME: {round(model[2])}", f"Model number: {model[0]}"])
+                         f"SCORE: {model[1]} ", f"TIME: {model[2]}", f"Model number: {model[0]}"])
         return best
 
 if __name__ == "__main__":
@@ -159,11 +175,11 @@ if __name__ == "__main__":
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(300,100, double_check=True)
+    model_optimizer.Train_Models(2000,800)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
-    model_optimizer.sort_data("SCORE") 
+    model_optimizer.sort_data("TIME") 
 
     # Tager de top X bedste modeller indenfor den valgte parameter og viser dem.
     top_rewards = model_optimizer.get_rewards(10)  

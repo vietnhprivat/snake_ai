@@ -35,6 +35,8 @@ class RewardOptimizer():
         # Funktionen nedenfor kaldes under træning af model. 
         # Tilføjer score og tid mellem æbler til lister når det er relevant
     def get_metrics(self, score, time, game_over):
+        if not type(self.time_between_apples) == list:
+            self.time_between_apples, self.scores = self.time_between_apples.tolist(), self.scores.tolist()
         self.time_between_apples.append(time)
         if game_over: self.scores.append(score)
         if self.time_between_apples: 
