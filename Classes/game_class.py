@@ -1,39 +1,44 @@
-import pygame
 import random
 from collections import namedtuple
 import torch
+import importlib
+pygame = None
+
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
-                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = False):
+                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True):
         self.snake_speed = snake_speed
 
         # Window size
         self.window_x = window_x
         self.window_y = window_y
 
-        # defining colors
-        self.black = pygame.Color(0, 0, 0)
-        self.white = pygame.Color(255, 255, 255)
-        self.red = pygame.Color(255, 0, 0)
-        self.green = pygame.Color(0, 255, 0)
-        self.blue = pygame.Color(0, 0, 255)
+        
         self.snake_length = snake_length
         self.kill_stuck = kill_stuck
 
         # Initialising pygame
-        pygame.init()
         self.should_write_data = force_write_data if force_write_data else write_data
         self.force_write_data = force_write_data
         self.should_render = render
         self.game_count = 0
         # Initialise game window
         if self.should_render:
-            pygame.display.set_caption('Slitherin Pythons')
-            self.game_window = pygame.display.set_mode((self.window_x, self.window_y))
+            self.pygame = importlib.import_module('pygame')
+            self.pygame.init()
+            self.black = self.pygame.Color(0, 0, 0)
+            self.white = self.pygame.Color(255, 255, 255)
+            self.red = self.pygame.Color(255, 0, 0)
+            self.green = self.pygame.Color(0, 255, 0)
+            self.blue = self.pygame.Color(0, 0, 255)
+            self.pygame.display.set_caption('Slitherin Pythons')
+            self.game_window = self.pygame.display.set_mode((self.window_x, self.window_y))
+            # defining colors
 
         # FPS (frames per second) controller
-        self.fps = pygame.time.Clock()
+            self.fps = self.pygame.time.Clock()
+        else: self.pygame = None
 
         self.reset()
         self.curr_action = self.direction
@@ -105,7 +110,8 @@ class Snake_Game():
         if spos[1] > fpos[1]: fruit[0] = 1
         return fruit
     
-    def get_state(self, is_tensor=False):
+    def get_state(self, is_tensor=False, game_over=False):
+        if game_over: return None
         if is_tensor:
             return torch.tensor([self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
                 self.update_fruit(self.snake_position, self.fruit_position)])
@@ -151,22 +157,22 @@ class Snake_Game():
                 elif action_index[2] == 1: action = "UP"	
 
             self.change_to = action
-        else:
-            for event in pygame.event.get():		
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
+        elif self.pygame is not None:
+            for event in self.pygame.event.get():		
+                if event.type == self.pygame.KEYDOWN:
+                    if event.key == self.pygame.K_UP:
                         self.change_to = 'UP'
-                    if event.key == pygame.K_DOWN:
+                    if event.key == self.pygame.K_DOWN:
                         self.change_to = 'DOWN'
-                    if event.key == pygame.K_LEFT:
+                    if event.key == self.pygame.K_LEFT:
                         self.change_to = 'LEFT'
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == self.pygame.K_RIGHT:
                         self.change_to = 'RIGHT'
-                    if event.key == pygame.K_r:
+                    if event.key == self.pygame.K_r:
                         self.reset()
-                    if event.key == pygame.K_q:
+                    if event.key == self.pygame.K_q:
                         exit_program = True
-                if event.type == pygame.QUIT:
+                if event.type == self.pygame.QUIT:
                     self.exit_program = True
         
         if self.change_to == 'UP' and self.direction != 'DOWN':
@@ -217,18 +223,32 @@ class Snake_Game():
         return time_taken if time_taken else None
 
     def render(self):
+        if self.pygame is None:
+            self.pygame = importlib.import_module('pygame')
+            self.pygame.init()
+            self.black = self.pygame.Color(0, 0, 0)
+            self.white = self.pygame.Color(255, 255, 255)
+            self.red = self.pygame.Color(255, 0, 0)
+            self.green = self.pygame.Color(0, 255, 0)
+            self.blue = self.pygame.Color(0, 0, 255)
+            self.pygame.display.set_caption('Slitherin Pythons')
+            self.game_window = self.pygame.display.set_mode((self.window_x, self.window_y))
+            # defining colors
+
+        # FPS (frames per second) controller
+            self.fps = self.pygame.time.Clock()
 
         self.game_window.fill(self.black)
         for pos in self.snake_body:
-            pygame.draw.rect(self.game_window, self.green,
-							pygame.Rect(pos[0], pos[1], 10, 10))
-        pygame.draw.rect(self.game_window, self.red, pygame.Rect(
+            self.pygame.draw.rect(self.game_window, self.green,
+							self.pygame.Rect(pos[0], pos[1], 10, 10))
+        self.pygame.draw.rect(self.game_window, self.red, self.pygame.Rect(
 			self.fruit_position[0], self.fruit_position[1], 10, 10))
         #   displaying score continuously
 		#self.show_score(1, env.white, 'times new roman', 20)
 		# Refresh game screen
         # creating font object score_font
-        score_font = pygame.font.SysFont('times new roman', 20)
+        score_font = self.pygame.font.SysFont('times new roman', 20)
         
         # create the display surface object 
         # score_surface
@@ -240,7 +260,7 @@ class Snake_Game():
         
         # displaying text
         self.game_window.blit(score_surface, score_rect)
-        pygame.display.update()
+        self.pygame.display.update()
 		# Frame Per Second /Refresh Rate
         self.fps.tick(self.snake_speed)
 

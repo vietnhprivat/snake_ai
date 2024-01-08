@@ -43,11 +43,11 @@ class ModelOptimizer():
             answer = input("Er du sikker på at du vil træne nu? Skriv \'nej' for at annullere, ellers skriv \'ja\': ").lower()
             if answer == "nej": return
             answer = input("Vælg reward for æble. Skriv \'skip\' for at vælge tilfældigt: ").lower()
-            if answer == "skip": pass
+            if answer == "skip" or answer == "s": pass
             else: 
                 apple_choice = int(answer)
                 answer = input("Vælg reward for step. Skriv \'skip\' for at vælge tilfældigt: ").lower()
-                if answer == "skip": pass
+                if answer == "skip" or answer == "s": pass
                 else: step_choice = int(answer)
 
 
@@ -79,7 +79,7 @@ class ModelOptimizer():
 
         # Datahelper hjælper med at konvertere info fra datafil fra string til float
         # Type er som udgangspunkt float, men kan ændres til andet
-    def datahelper(self, pointer, model, type=float):
+    def datahelper(self, pointer, model, type=float, seperator=","):
         # Data ligger i fil som strings.
         val = ""
 
@@ -89,10 +89,27 @@ class ModelOptimizer():
             # tilføje karakteren til vores output og flytte pointeren én hen. Hvis ikke,
             # er det fordi at der er et adskildelseskomma, og vi returnerer den værdi, vi har lavet, og hvor pointeren nu er.
             # Hvis vi er ved slutningen af linjen, skal vi også returnere.
-            if not num == "," and not pointer == len(model)-1: 
+            if not num == seperator and not pointer == len(model)-1: 
                 val += num
                 pointer +=1
-            else: return type(val), pointer
+            else: 
+                if not type == list: return type(val), pointer
+                else:
+                    index_0 = ""
+                    com = -1
+                    for i, char in enumerate(val[1:]):
+                        if char == ",": 
+                            com = i + 1
+                            break
+                        index_0 += char
+                    index_0 = float(index_0)
+                    index_1 = ""
+                    for char in val[com+1:]:
+                        if char == "]": break
+                        index_1 += char
+                    index_1 = float(index_1)
+                    return [index_0,index_1], pointer
+
 
     def get_data(self):
         with open(self.metric_folder_path, "r") as f:
@@ -104,10 +121,18 @@ class ModelOptimizer():
             index, pointer = self.datahelper(pointer,model)
             # Pointer er nu indekset af kommaet, der adskilder index og mean. Der er 13 indtil score begynder
             pointer += 13
-            mean_score, pointer = self.datahelper(pointer,model)
-            pointer += 18
-            mean_time, pointer = self.datahelper(pointer,model)
-            pointer += 7
+            if model[pointer] == "[":
+                mean_score, pointer = self.datahelper(pointer,model, type=list, seperator="]")
+                pointer += 19
+            else: 
+                mean_score, pointer = self.datahelper(pointer,model)
+                pointer += 18
+            if model[pointer] == "[":
+                mean_time, pointer = self.datahelper(pointer,model, type=list, seperator="]")
+                pointer += 8
+            else: 
+                mean_time, pointer = self.datahelper(pointer,model)
+                pointer += 7
             runs, pointer = self.datahelper(pointer,model)
             pointer += 12
             file_path, pointer = self.datahelper(pointer,model, type=str)
@@ -117,7 +142,7 @@ class ModelOptimizer():
             apple_reward, pointer = self.datahelper(pointer,model)
             pointer += 15
             death_punish, pointer = self.datahelper(pointer,model)
-            data.append((index, mean_score, mean_time, runs, file_path, step_punish, apple_reward, death_punish))
+            data.append([index, mean_score, mean_time, runs, file_path, step_punish, apple_reward, death_punish])
         return data
     
     def sort_data(self, index_to_sort_by):
@@ -141,20 +166,20 @@ class ModelOptimizer():
         # Laver en named tuple med de rewards, der er blevet brugt
         for model in self.sorted_data[:top+1]:
             best.append([f"STEP Reward: {model[5]}", f"APPLE Reward: {model[6]}", f"DEATH Reward: {model[7]}", 
-                         f"SCORE: {round(model[1])} ", f"TIME: {round(model[2])}", f"Model number: {model[0]}"])
+                         f"SCORE: {model[1]} ", f"TIME: {model[2]}", f"Model number: {model[0]}"])
         return best
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(2) 
+    model_optimizer = ModelOptimizer(1) 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(1200,400, double_check=True)
+    model_optimizer.Train_Models(2000,800)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
-    model_optimizer.sort_data("SCORE") 
+    model_optimizer.sort_data("TIME") 
 
     # Tager de top X bedste modeller indenfor den valgte parameter og viser dem.
     top_rewards = model_optimizer.get_rewards(10)  

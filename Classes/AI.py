@@ -13,7 +13,7 @@ import torch.nn.functional as F
 # Import environment and controls
 from game_class import Snake_Game, Data
 
-game_env = Snake_Game()
+#game_env = Snake_Game()
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -70,7 +70,7 @@ class DQN(nn.Module):
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 128
+BATCH_SIZE = 500
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
@@ -159,8 +159,8 @@ def optimize_model():
     non_final_next_states = torch.cat([s for s in batch.next_state
                                                 if s is not None])
     
-    for state in batch.state:
-        print(state.shape, state)
+    #for state in batch.state:
+    #    print(state.shape, state)
 
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
@@ -169,7 +169,7 @@ def optimize_model():
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
     # for each batch state according to policy_net
-    state_action_values = policy_net(state_batch).gather(1, action_batch)
+    state_action_values = policy_net(state_batch.float()).gather(0, action_batch.long())
 
     # Compute V(s_{t+1}) for all next states.
     # Expected values of actions for non_final_next_states are computed based
@@ -178,7 +178,7 @@ def optimize_model():
     # state value or 0 in case the state was final.
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
     with torch.no_grad():
-        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
+        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values[0]
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -197,24 +197,32 @@ def optimize_model():
 if torch.cuda.is_available():
     num_episodes = 600
 else:
-    num_episodes = 50
-
+    num_episodes = 2000
+counter_1 = 0
 for i_episode in range(num_episodes):
+    counter_1 +=1
+    counter = 0
+    print("EPIS",counter_1)
     # Initialize the environment and get it's state
-    game_env.reset()
-    state = game_env.get_state(is_tensor = True)
-    state_tensor = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    for t in count():
+    game_env = Snake_Game(kill_stuck=True, snake_speed=100, window_x=300, window_y=300, snake_length=5)
+    game_env.should_render = False
+    if i_episode >= 1950:
+        game_env.should_render = True
+    state = game_env.get_state(is_tensor=True)
+    state_tensor = torch.tensor(state, dtype=torch.float, device=device).unsqueeze(0)
+    while game_env.get_game_count() < BATCH_SIZE:
+        counter +=1
+        state = game_env.get_state(is_tensor=True)
         action = select_action(state)
         game_env.move(game_env.action_space[action])
+        game_env.has_apple()
+        done = game_env.is_game_over_bool()
+        game_env.is_game_over()
         reward = game_env.get_reward()
         reward = torch.tensor([reward], device = device)
-        done = game_env.is_game_over()
 
-        if done:
-            next_state = None
-        else:
-            next_state = torch.tensor(game_env.get_state(is_tensor = True), dtype=torch.float32, device=device).unsqueeze(0)
+        if done: next_state = None
+        else: next_state = torch.tensor(game_env.get_state(is_tensor=True, game_over=done), dtype=torch.float, device=device).unsqueeze(0)
 
         # Store the transition in memory
         memory.push(state, action, next_state, reward)
@@ -226,8 +234,8 @@ for i_episode in range(num_episodes):
         optimize_model()
 
         if done:
-            episode_durations.append(t + 1)
-            plot_durations()
+            episode_durations.append(counter + 1)
+            #plot_durations()
 
             # Soft update of the target network's weights
             # θ_target = τ*θ_local + (1 - τ)*θ_target

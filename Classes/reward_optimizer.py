@@ -35,6 +35,8 @@ class RewardOptimizer():
         # Funktionen nedenfor kaldes under træning af model. 
         # Tilføjer score og tid mellem æbler til lister når det er relevant
     def get_metrics(self, score, time, game_over):
+        if not type(self.time_between_apples) == list:
+            self.time_between_apples, self.scores = self.time_between_apples.tolist(), self.scores.tolist()
         self.time_between_apples.append(time)
         if game_over: self.scores.append(score)
         if self.time_between_apples: 
@@ -52,8 +54,9 @@ class RewardOptimizer():
         score_var = np.var(self.scores)
         apple_var = np.var(self.time_between_apples)
         if self.look_at is not None:
-            pass
-        KI_score = [mean_score - 1.96* np.sqrt(score_var)/np.sqrt(self.look_at)]
+            KI_score = [mean_score - 1.96* np.sqrt(score_var)/np.sqrt(self.look_at), mean_score + 1.96* np.sqrt(score_var)/np.sqrt(self.look_at)]
+            KI_apple = [mean_time_apple - 1.96* np.sqrt(apple_var)/np.sqrt(self.look_at), mean_time_apple + 1.96* np.sqrt(apple_var)/np.sqrt(self.look_at)]
+            return KI_score, KI_apple
         return mean_score, mean_time_apple
 
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
