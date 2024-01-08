@@ -4,10 +4,10 @@ import numpy as np
 from collections import deque
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
-from Classes.model_testing import Linear_QNet, QTrainer
-from Classes.helper_testing import plot
+from model_testing import Linear_QNet, QTrainer
+from helper_testing import plot
 
-MAX_MEMORY = 100_000
+MAX_MEMORY = 10_000
 BATCH_SIZE = 1000
 LR = 0.001
 
@@ -71,7 +71,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
+        self.epsilon = 300 - self.n_games
         final_move = [0,0,0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
@@ -91,22 +91,23 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=100, render=False, kill_stuck=True)
-    # reward_optim = RewardOptimizer()
-
+    game = Snake_Game(snake_speed=100, render=False, kill_stuck=True, window_x=300, window_y=300,
+                      apple_reward=250, step_punish=-9, snake_length=5)
+    reward_optim = RewardOptimizer('Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     while True:
-        if agent.n_games == 2000:
-            game = Snake_Game(render=True, snake_speed=25, kill_stuck=True)
+        # if agent.n_games == 230:
+        #     game = Snake_Game(snake_speed=150, render=True, kill_stuck=True, window_x=200, window_y=200,
+        #               apple_reward=90, step_punish=-9)
 
         state_old = agent.get_state(game)
 
         final_move = agent.get_action(state_old)
         game.move(final_move)  # make a move
-        game.has_apple()
-        # time_taken, game_over = game.has_apple(), game.is_game_over_bool()
-        # reward_optim.get_metrics(game.score, time_taken, game_over)
-
+        # game.has_apple()
+        time_taken, game_over = game.has_apple(), game.is_game_over_bool()
         curr_score = game.score
+        reward_optim.get_metrics(game.score, time_taken, game_over)
+
         done = game.is_game_over()
         reward = game.get_reward()
         state_new = agent.get_state(game)
@@ -114,10 +115,16 @@ def train():
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
         agent.remember(state_old, final_move, reward, state_new, done)
 
-
+        if game.get_game_count() % 250 == 0 and done:
+            reward_optim.clean_data(50)
+            model_metrics = reward_optim.calculate_metrics()
+            reward_optim.commit(0, 100, model_metrics, "NONE", 
+                             "NONE", "NONE", "NONE")
+            reward_optim.push()
+            print("PUSHED")
 
         if done:
-            game.reset()
+            #game.reset()
             agent.n_games += 1
             agent.train_long_memory()
 
@@ -126,7 +133,7 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            #print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
             plot_scores.append(curr_score)
             total_score += curr_score
