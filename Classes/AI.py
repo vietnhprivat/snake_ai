@@ -70,7 +70,7 @@ class DQN(nn.Module):
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 128
+BATCH_SIZE = 500
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
@@ -197,15 +197,21 @@ def optimize_model():
 if torch.cuda.is_available():
     num_episodes = 600
 else:
-    num_episodes = 100
-
+    num_episodes = 2000
+counter_1 = 0
 for i_episode in range(num_episodes):
+    counter_1 +=1
     counter = 0
+    print("EPIS",counter_1)
     # Initialize the environment and get it's state
-    game_env = Snake_Game(kill_stuck=True, snake_speed=200, window_x=300, window_y=300, snake_length=5)
+    game_env = Snake_Game(kill_stuck=True, snake_speed=100, window_x=300, window_y=300, snake_length=5)
+    game_env.should_render = False
+    if i_episode >= 1950:
+        game_env.should_render = True
     state = game_env.get_state(is_tensor=True)
     state_tensor = torch.tensor(state, dtype=torch.float, device=device).unsqueeze(0)
     while game_env.get_game_count() < BATCH_SIZE:
+        counter +=1
         state = game_env.get_state(is_tensor=True)
         action = select_action(state)
         game_env.move(game_env.action_space[action])
