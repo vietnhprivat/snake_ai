@@ -71,7 +71,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 1000 - self.n_games
+        self.epsilon = 1500 - self.n_games
         final_move = [0,0,0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
@@ -92,15 +92,14 @@ def train():
     record = 0
     agent = Agent()
     game = Snake_Game(snake_speed=150, render=False, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=95, step_punish=-0.5, snake_length=4)
+                      apple_reward=95, step_punish=-0.5, snake_length=5)
     reward_optim = RewardOptimizer('Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
     while True:
-        if agent.n_games == 50:
-            game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=95, step_punish=-0.5)
-        print(game.get_game_count())
+        # if agent.n_games == 50:
+        #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
+        #               apple_reward=95, step_punish=-0.5, snake_length=5)
         state_old = agent.get_state(game)
         final_move = agent.get_action(state_old)
         game.move(final_move)  # make a move
@@ -123,7 +122,7 @@ def train():
             print(c, "GAMES")
 
         if game.get_game_count() % 250 == 0 and done:
-            reward_optim.clean_data(50)
+            reward_optim.clean_data(look_at=None)
             model_metrics = reward_optim.calculate_metrics()
             reward_optim.commit(0, 100, model_metrics, "NONE", 
                              "NONE", "NONE", "NONE")

@@ -26,8 +26,8 @@ class RewardOptimizer():
 
         # Clean data kaldes inden metrics udregnes. Den udvælger hvor mange, af de sidste
         # runs, der skal tages i betragtning når vi udregner gns
-    def clean_data(self,look_at):
-        self.look_at = look_at
+    def clean_data(self,look_at=None):
+        self.look_at = look_at if look_at is not None else len(self.scores)
         self.scores = self.scores[look_at:]
         self.time_between_apples = self.time_between_apples[look_at:]
 
