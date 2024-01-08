@@ -11,7 +11,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # Import environment and controls
-from Classes.game_class import Snake_Game as sg, Data as dt
+from game_class import Snake_Game, Data
+
+game_env = Snake_Game()
 
 # setting up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -77,9 +79,9 @@ TAU = 0.005
 LR = 1e-4
 
 # Get number of actions from gym action space ##############################
-n_actions = 3
+n_actions = len(game_env.action_space)
 # Get the number of state observations
-n_observations = 3
+n_observations = 4       # sum(len(part) for part in game_env.get_state()) # (danger = 4, fruit = 4, moves = 4)
 # (Determines the size of the input and output layers of the network based on the environment and control setup.)
 
 
@@ -105,9 +107,9 @@ def select_action(state):
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1).indices.view(1, 1)
+            return policy_net(state_tensor).max(1)[1].view(1, 1)
     else:
-        return torch.tensor((random.choice(sg.action_space)), device=device, dtype=torch.long)
+        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
 
 
 episode_durations = []
@@ -195,18 +197,20 @@ else:
 
 for i_episode in range(num_episodes):
     # Initialize the environment and get it's state
-    state, info = sg.reset()
-    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+    game_env.reset()
+    state = game_env.get_state()
+    state_tensor = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     for t in count():
         action = select_action(state)
-        observation, reward, terminated, truncated, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-        done = terminated or truncated
+        game_env.move(action.tolist())
+        reward = game_env.get_reward()
+        reward = torch.tensor([reward], device = device)
+        done = game_env.is_game_over()
 
-        if terminated:
+        if done:
             next_state = None
         else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+            next_state = torch.tensor(game_env.get_state(), dtype=torch.float32, device=device).unsqueeze(0)
 
         # Store the transition in memory
         memory.push(state, action, next_state, reward)
@@ -217,17 +221,18 @@ for i_episode in range(num_episodes):
         # Perform one step of the optimization (on the policy network)
         optimize_model()
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = target_net.state_dict()
-        policy_net_state_dict = policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_net.load_state_dict(target_net_state_dict)
-
         if done:
             episode_durations.append(t + 1)
             plot_durations()
+
+            # Soft update of the target network's weights
+            # θ_target = τ*θ_local + (1 - τ)*θ_target
+            target_net_state_dict = target_net.state_dict()
+            policy_net_state_dict = policy_net.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = TAU*policy_net_state_dict[key] + (1-TAU)*target_net_state_dict[key]
+            target_net.load_state_dict(target_net_state_dict)
+
             break
 
 print('Complete')
