@@ -8,8 +8,10 @@ import numpy as np
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
-                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True):
+                 window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True,
+                 grid_state=False):
         self.snake_speed = snake_speed
+        self.grid_mode = grid_state
 
         # Window size
         self.window_x = window_x
@@ -57,13 +59,13 @@ class Snake_Game():
     def spawn_apple(self, snake_coordinates):
         #Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
         #Her får alle koordinater værdien 1
-        grid = np.ones((int(self.window_x/10), int(self.window_y/10)))
+        apple_grid = np.ones((int(self.window_x/10), int(self.window_y/10)))
 
         #Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
         snake_positions = np.array(snake_coordinates) // 10
-        grid[snake_positions[:, 0],snake_positions[:, 1]] = 0
+        apple_grid[snake_positions[:, 0],snake_positions[:, 1]] = 0
         #Skaber en liste over de koordinater, der ikke er en slange på
-        free_coordinates = np.argwhere(grid == 1)
+        free_coordinates = np.argwhere(apple_grid == 1)
         #Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
         if len(free_coordinates) > 0:
              chosen_coordinate = free_coordinates[random.randint(0, len(free_coordinates) - 1)] * 10
@@ -117,6 +119,8 @@ class Snake_Game():
     
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
+        if self.grid_mode:
+            return self.grid()
         danger_state = self.update_danger(self.snake_position, self.window_x,self.window_y, self.snake_body)
         direction_state = self.update_direction(self.direction)
         fruit_state = self.update_fruit(self.snake_position, self.fruit_position)
@@ -351,12 +355,19 @@ class Snake_Game():
         # Ændre body og fruit placering i grid til 1
         grid[body[:, 1], body[:, 0]] = 1
         fruit = np.clip(fruit, 0, [x - 1, y - 1])  # Ensure fruit coordinates are within bounds
-        grid[fruit[1], fruit[0]] = 1
+        grid[fruit[1], fruit[0]] = 5
+        grid[self.snake_position[1] // 10, self.snake_position[0] // 10] = 2
+
+        to_app = np.full((2,self.window_x), -1)
+
+        grid = np.append(grid, to_app,)
+        np.roll(grid, -1, 0)
         
         # Konvertere grid til 2D array
-        grid2D = grid.ravel()
+        # grid2D = grid.ravel()
+        print(grid) #print(grid2D)
         
-        return grid2D    
+        return grid#2D    
 
 
 class Data():
@@ -402,13 +413,16 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game()
+    game = Snake_Game(window_x=200,window_y=200)
     n = 2
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
+    print_grid = True
     while game.get_game_count() < n:
         s1 = game.get_state()
+        game.grid()
+        print(game.snake_position)
         game.move()
         action = game.get_move()
         game.has_apple()
