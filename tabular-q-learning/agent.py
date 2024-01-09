@@ -8,7 +8,7 @@ from helper import plot
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-max_memory = 100000
+max_memory = 10000
 batch_size = 1000
 LR = 0.001
 
@@ -19,16 +19,16 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount factor skal være mindre end 1
         self.memory = deque(maxlen = max_memory) #popleft() fjern gammelt hukommelse
-        self.model= Linear_QNet(400, 256, 3) #TODO
+        self.model= Linear_QNet(11, 256, 3) #TODO
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 
     def get_state_agent(self, game):
         
         # Grid metode state space = w_x * w_y. f.eks. 20 x 20 = 400.  
-        return game.grid()
+        # return game.grid()
 
-        # 11 states metode
+        # # 11 states metode
         return game.get_state()
 
 

@@ -390,7 +390,7 @@ class Snake_Game():
         # Konvertere grid til 2D array
         grid2D = grid.ravel()
         
-        return grid
+        return grid2D
 
 class Data():
     def __init__(self):

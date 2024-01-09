@@ -29,6 +29,7 @@ class Agent:
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
+        # return game.grid()
         return game.get_state()
 
     def remember(self, state, action, reward, next_state, done):
