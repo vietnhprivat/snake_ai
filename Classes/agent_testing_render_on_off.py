@@ -10,9 +10,9 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 5000
-BATCH_SIZE = 50
-LR = 0.001
+MAX_MEMORY = 1600
+BATCH_SIZE = 32
+LR = 0.01
 
 class Agent:
     def __init__(self):
@@ -23,9 +23,9 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
-        self.model = Linear_QNet(11, 256, 3).to(self.device)  
+        self.model = Linear_QNet(11, 256, 3).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.9999  # Decaying rate per game
+        self.epsilon_decay = 0.99  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
