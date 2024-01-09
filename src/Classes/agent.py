@@ -74,7 +74,7 @@ def train():
     agent = Agent()
     game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
                       apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120)
-    reward_optim = RewardOptimizer('Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
+    reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
     step_counter = 0

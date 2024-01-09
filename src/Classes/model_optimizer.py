@@ -1,6 +1,6 @@
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
-from q_learning_tabular_class import Q_learning
+from Classes.ql_tab import Q_learning
 import random
 from collections import namedtuple
 
@@ -12,8 +12,8 @@ from collections import namedtuple
 # Hvis data gemmes i samme format, kan denne også bruges uden at træne, men blot som databehandler.
 
 class ModelOptimizer():
-    def __init__(self, models_to_train, metric_folder_path='Classes\optim_of_tab_q-learn\metric_files\metric_test.txt', 
-                 model_folder_path='Classes\optim_of_tab_q-learn\model_files\\'):
+    def __init__(self, models_to_train, metric_folder_path='src\Classes\optim_of_tab_q-learn\metric_files\metric_test.txt', 
+                 model_folder_path='src\Classes\optim_of_tab_q-learn\model_files\\'):
         # Models_to_train er hvor mange forskellige modeller, der skal trænes
         self.models_to_train = models_to_train
 

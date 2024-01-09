@@ -84,3 +84,4 @@ metrics(index=0, mean_score=[207.09428754410948, 232.5190692221471], mean_time_a
 =======
 metrics(index=0, mean_score=[0.26133598412758874, 1.8815211587295542], mean_time_apple=[81.2648666087707, 102.06846672456264], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
 >>>>>>> 2c3d36c9e9b1f01bb2840490c5a749f8fc70de0b
+metrics(index=0, mean_score=[0.0, 0.0], mean_time_apple=[-1.0, -1.0], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
