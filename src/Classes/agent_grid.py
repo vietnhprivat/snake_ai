@@ -10,8 +10,8 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 1600
-BATCH_SIZE = 32
+MAX_MEMORY = 3200
+BATCH_SIZE = 64
 LR = 0.001
 
 class Agent:
@@ -20,12 +20,12 @@ class Agent:
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1  # randomness
-        self.gamma = 0.9  # discount rate
+        self.gamma = 0.95  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
         self.model = Linear_QNet(1024, 256, 4).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.99  # Decaying rate per game
+        self.epsilon_decay = 0.99995  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
@@ -83,6 +83,7 @@ def train():
         pygame.init()
         game.toggle_rendering()
     game_toggle_score, game_toggle_runs, quitting = False, False, False
+    toggle_epsilon, toggle_highscore = False, False
     while True:
         step_counter += 1
         if game.toggle_possible:
@@ -102,6 +103,10 @@ def train():
                         game.snake_speed += 5
                     elif event.key == pygame.K_DOWN:
                         game.snake_speed -=5
+                    elif event.key == pygame.K_e:
+                        toggle_epsilon = True
+                    elif event.key == pygame.K_h:
+                        toggle_highscore = True
 
         # if agent.n_games == 2000:
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
@@ -135,7 +140,10 @@ def train():
             if game_toggle_score or game_toggle_runs:
                 print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
 
+
             if game_number % 250 == 0 or quitting:
+                if toggle_highscore or toggle_epsilon:
+                    print(f"EPSILON: {agent.epsilon}"*toggle_epsilon,f"HIGHSCORE: {high_score}"*toggle_highscore)
                 reward_optim.clean_data(look_at=None)
                 model_metrics = reward_optim.calculate_metrics()
                 reward_optim.commit(0, 100, model_metrics, "NONE", 
