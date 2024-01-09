@@ -4,8 +4,8 @@ import numpy as np
 from collections import deque
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
-from model_testing import Linear_QNet, QTrainer
-from helper_testing import plot
+from model_dql import Linear_QNet, QTrainer
+from helper_dql import plot
 import torch.cuda
 
 
