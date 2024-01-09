@@ -10,8 +10,8 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 20_000 
-BATCH_SIZE = 2000
+MAX_MEMORY = 5000
+BATCH_SIZE = 50
 LR = 0.001
 
 class Agent:
@@ -29,35 +29,7 @@ class Agent:
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
-        # Extracting the head of the snake and the fruit position
-        head = game.snake_body[0]
-        fruit = game.fruit_position
-
-        # Constructing the danger directly ahead, to the left and to the right
-        danger_straight = game.update_danger(head, game.window_x, game.window_y, game.snake_body)
-        danger_left = danger_straight[-1:] + danger_straight[:-1]  # rotating the danger list to left
-        danger_right = danger_straight[1:] + danger_straight[:1]  # rotating the danger list to right
-
-        # Current direction of the snake
-        direction = game.update_direction(game.direction)
-
-        # Food location relative to the snake head
-        food_dir = game.update_fruit(head, fruit)
-
-        state = [
-            # Danger straight
-            danger_straight[0],
-            # Danger right
-            danger_right[0],
-            # Danger left
-            danger_left[0],
-            # Current direction
-            *direction,
-            # Food direction
-            *food_dir
-        ]
-
-        return np.array(state, dtype=int)
+        return game.get_state()
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -85,7 +57,7 @@ class Agent:
             move = random.randint(0, 2)  # Assuming 3 actions
             final_move[move] = 1
         else:
-            state_tensor = torch.tensor(state, dtype=torch.float).to(self.device)
+            state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
@@ -95,6 +67,9 @@ class Agent:
 
 def train():
     record = 0
+    plot_mean_scores = []
+    plot_scores = []
+    total_score = 0
     agent = Agent()
     game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
                       apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120)
@@ -122,6 +97,10 @@ def train():
                         quitting = True
                         print("\nBAILING - force pushing metrics...\n")
                         game_toggle_runs,game_toggle_score =False,False
+                    elif event.key == pygame.K_UP:
+                        game.snake_speed += 5
+                    elif event.key == pygame.K_DOWN:
+                        game.snake_speed -=5
 
         # if agent.n_games == 2000:
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
@@ -167,7 +146,7 @@ def train():
                 if quitting: break
 
 
-            #print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            # print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
             # plot_scores.append(curr_score)
             # total_score += curr_score
