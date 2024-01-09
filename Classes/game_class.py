@@ -332,7 +332,7 @@ class Snake_Game():
         for block in self.snake_body[1:]:
             if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
                 return True
-        return 
+        return False
     
     def grid(self):
         # Konvertere spillets koordinater til "rigtige koordinater"
