@@ -3,6 +3,7 @@ from collections import namedtuple
 import torch
 import importlib
 pygame = None
+import numpy as np
 
 
 class Snake_Game():
@@ -14,7 +15,7 @@ class Snake_Game():
         self.window_x = window_x
         self.window_y = window_y
 
-        
+        self.device = 'cpu' #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.snake_length = snake_length
         self.kill_stuck = kill_stuck
 
@@ -49,52 +50,44 @@ class Snake_Game():
         self.stuck_step = 0
         self.stuck = False
 
+        #Tjekker i action om vi bliver feedet med træk
+        self.getting_moves = False
+
         #Æble-spawn funktion
     def spawn_apple(self, snake_coordinates):
         #Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
         #Her får alle koordinater værdien 1
-        grid = [[1 for _ in range(int(self.window_x/10))] for _ in range(int(self.window_y/10))]
+        grid = np.ones((int(self.window_x/10), int(self.window_y/10)))
+
         #Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
-        for x,y in snake_coordinates: grid[int(y/10)][int(x/10)] = 0
+        snake_positions = np.array(snake_coordinates) // 10
+        grid[snake_positions[:, 0],snake_positions[:, 1]] = 0
         #Skaber en liste over de koordinater, der ikke er en slange på
-        free_coordinates = [(int(x), int(y)) for x in range(int(self.window_x/10)) for y in range(int(self.window_y/10)) if grid[y][x] == 1]
+        free_coordinates = np.argwhere(grid == 1)
         #Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
-        # Til at spawne æblet. Hvis ikke, har vi vundet
-        if free_coordinates: 
-            new_apple = random.choice(free_coordinates)
-            new_apple = new_apple[0]*10, new_apple[1]*10
-            return new_apple
+        if len(free_coordinates) > 0:
+             chosen_coordinate = free_coordinates[random.randint(0, len(free_coordinates) - 1)] * 10
+             return chosen_coordinate[0], chosen_coordinate[1]
         else: 
             return "WINNER"
 
     def reset(self):
-        #Sætter tilfældig startkoordinat og æblekoordinat
-        snake_length = self.snake_length
-        start_pos = [random.randrange(snake_length, (self.window_x//10)-10) * 10, random.randrange(1, (self.window_y//10)) * 10]
-        snake_body_local = [[start_pos[0] - 10*i,start_pos[1]] for i in range(snake_length)]
-        start_fruit = self.spawn_apple(snake_body_local)
-        #Gør score til 0 og angiver at der er et æble på brættet
-        fruit_spawn_local = True
-        score_local = 0
-        #Spawner slangen med at den går mod højre og skaber slangens krops koord
-        # Ud fra den tilfældige startposition.
-        direction_local = 'RIGHT'
-        change_to_local = direction_local
-        time_steps = 0
+        self.snake_position = [random.randrange(self.snake_length, (self.window_x//10)-10) * 10, random.randrange(1, (self.window_y//10)) * 10]
+        self.snake_body = [[self.snake_position[0] - 10*i,self.snake_position[1]] for i in range(self.snake_length)]
+        self.fruit_position = self.spawn_apple(self.snake_body)
+        self.fruit_spawn = True
+        self.score = 0
+        self.direction = 'RIGHT'
+        self.change_to = self.direction
+        self.time_steps = 0
         self.stuck, self.stuck_step = False, 0
-        (self.snake_position, self.fruit_position,self.fruit_spawn,
-            self.score,self.direction,self.change_to, 
-            self.snake_body, self.time_steps) = (start_pos, start_fruit,
-                                                    fruit_spawn_local, score_local, 
-                                                    direction_local, change_to_local, 
-                                                    snake_body_local, time_steps)
     
     def update_danger(self,spos,wx,wy,body):
         danger = [0,0,0,0]
         if spos[0] == 0: danger[3] = 1
-        if spos[0] == wx - 10: danger[2] = 1
+        elif spos[0] == wx - 10: danger[2] = 1
         if spos[1] == 0: danger[0] = 1
-        if spos[1] == wy - 10: danger[1] = 1
+        elif spos[1] == wy - 10: danger[1] = 1
 
         if [spos[0] + 10, spos[1]] in body: danger[2] = 1
         if [spos[0] - 10, spos[1]] in body: danger[3] = 1
@@ -106,25 +99,25 @@ class Snake_Game():
     def update_fruit(self, spos,fpos):
         fruit = [0,0,0,0]
         if spos[0] < fpos[0]: fruit[2] = 1
-        if spos[0] > fpos[0]: fruit[3] = 1
+        elif spos[0] > fpos[0]: fruit[3] = 1
         if spos[1] < fpos[1]: fruit[1] = 1
-        if spos[1] > fpos[1]: fruit[0] = 1
+        elif spos[1] > fpos[1]: fruit[0] = 1
         return fruit
     
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
         if is_tensor:
             return torch.tensor([self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
-                self.update_fruit(self.snake_position, self.fruit_position)])
+                self.update_fruit(self.snake_position, self.fruit_position)]).to(self.device)
         return (self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
                 self.update_fruit(self.snake_position, self.fruit_position))
     
     def update_direction(self, input_direction):
         output_direction = [0,0,0,0] # up, down, right, left
         if input_direction == "UP": output_direction[0] = 1
-        if input_direction == "DOWN": output_direction[1] = 1
-        if input_direction == "RIGHT": output_direction[2] = 1
-        if input_direction == "LEFT": output_direction[3] = 1
+        elif input_direction == "DOWN": output_direction[1] = 1
+        elif input_direction == "RIGHT": output_direction[2] = 1
+        elif input_direction == "LEFT": output_direction[3] = 1
         return output_direction
     
     
@@ -132,6 +125,7 @@ class Snake_Game():
         self.reward = -1
         self.stuck_step += 1
         if action_index:
+            self.getting_moves = True
             direction_local = self.update_direction(self.direction)
             if direction_local[0] == 1:
                 if action_index[0] == 1: action = "UP"
@@ -140,25 +134,26 @@ class Snake_Game():
 
         
         # Snake direction syd
-            if direction_local[1] == 1:
+            elif direction_local[1] == 1:
                 if action_index[0] == 1: action = "DOWN"
                 elif action_index[1] == 1: action = "RIGHT" 
                 elif action_index[2] == 1: action = "LEFT"
 
             # Snake direction øst
-            if direction_local[2] == 1:
+            elif direction_local[2] == 1:
                 if action_index[0] == 1: action = "RIGHT"
                 elif action_index[1] == 1: action = "UP" 
                 elif action_index[2] == 1: action = "DOWN"		
 
             # Snake direction VEST
-            if direction_local[3] == 1:
+            else:
                 if action_index[0] == 1: action = "LEFT"
                 elif action_index[1] == 1: action = "DOWN" 
                 elif action_index[2] == 1: action = "UP"	
 
             self.change_to = action
-        elif self.pygame is not None:
+
+        elif self.pygame is not None and not self.getting_moves:
             for event in self.pygame.event.get():		
                 if event.type == self.pygame.KEYDOWN:
                     if event.key == self.pygame.K_UP:
@@ -176,23 +171,16 @@ class Snake_Game():
                 if event.type == self.pygame.QUIT:
                     self.exit_program = True
         
-        if self.change_to == 'UP' and self.direction != 'DOWN':
-            self.direction = 'UP'
-        if self.change_to == 'DOWN' and self.direction != 'UP':
-            self.direction = 'DOWN'
-        if self.change_to == 'LEFT' and self.direction != 'RIGHT':
-            self.direction = 'LEFT'
-        if self.change_to == 'RIGHT' and self.direction != 'LEFT':
-            self.direction = 'RIGHT'
+        self.direction = self.change_to
 
-        if self.direction == 'UP':
-            self.snake_position[1] -= 10
-        if self.direction == 'DOWN':
-            self.snake_position[1] += 10
-        if self.direction == 'LEFT':
-            self.snake_position[0] -= 10
         if self.direction == 'RIGHT':
             self.snake_position[0] += 10
+        elif self.direction == 'UP':
+            self.snake_position[1] -= 10
+        elif self.direction == 'DOWN':
+            self.snake_position[1] += 10
+        elif self.direction == 'LEFT':
+            self.snake_position[0] -= 10
         self.time_steps += 1
         self.curr_action = self.direction
         self.snake_body.insert(0, list(self.snake_position))
@@ -227,7 +215,7 @@ class Snake_Game():
         self.should_render = not self.should_render
         if self.should_render:
             self.snake_speed = 25
-        else: self.snake_speed = 500
+        else: self.snake_speed = 2000
 
     def render(self):
         if self.pygame is None:
@@ -278,7 +266,13 @@ class Snake_Game():
             self.game_count +=1
             self.reward = self.punish_death
             return True
-        if self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
+        elif self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
+            self.reset()
+            self.game_count +=1
+            self.reward = self.punish_death
+            return True
+        # Tjekker om slangen sidder fast og slutter hvis den gør.
+        elif self.kill_stuck and self.is_stuck():
             self.reset()
             self.game_count +=1
             self.reward = self.punish_death
@@ -292,12 +286,6 @@ class Snake_Game():
                 self.reward = self.punish_death
                 return True
             
-        # Tjekker om slangen sidder fast og slutter hvis den gør.
-        if self.kill_stuck and self.is_stuck():
-            self.reset()
-            self.game_count +=1
-            self.reward = self.punish_death
-            return True
         return False
     
 
@@ -321,9 +309,9 @@ class Snake_Game():
     def is_game_over_bool(self):
         if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
             return True
-        if self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
+        elif self.snake_position[1] < 0 or self.snake_position[1] > self.window_y-10:
             return True
-        if self.kill_stuck and self.is_stuck():
+        elif self.kill_stuck and self.is_stuck():
             return True
         for block in self.snake_body[1:]:
             if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
