@@ -6,24 +6,26 @@ from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
 from model_testing import Linear_QNet, QTrainer
 from helper_testing import plot
-import pygame
+import torch.cuda
 
-pygame.init()
 
-MAX_MEMORY = 10_000
-BATCH_SIZE = 1000
+
+MAX_MEMORY = 20_000 
+BATCH_SIZE = 2000
 LR = 0.001
 
 class Agent:
     def __init__(self):
+        self.device = 'cpu' #torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
-        self.model = Linear_QNet(11, 256, 3)  
+        self.model = Linear_QNet(11, 256, 3).to(self.device)  
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.99999  # Decaying rate per game
+        self.epsilon_decay = 0.9999  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
@@ -83,7 +85,7 @@ class Agent:
             move = random.randint(0, 2)  # Assuming 3 actions
             final_move[move] = 1
         else:
-            state_tensor = torch.tensor(state, dtype=torch.float)
+            state_tensor = torch.tensor(state, dtype=torch.float).to(self.device)
             prediction = self.model(state_tensor)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
@@ -92,21 +94,34 @@ class Agent:
 
 
 def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
     record = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=200, render=False, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
+    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
+                      apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120)
     reward_optim = RewardOptimizer('Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
+    step_counter = 0
+    if game.toggle_possible: 
+        import pygame
+        pygame.init()
+        game.toggle_rendering()
+    game_toggle_score, game_toggle_runs, quitting = False, False, False
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:  # Detect spacebar press
-                    game.toggle_rendering()  # Toggle rendering and speed
+        step_counter += 1
+        if game.toggle_possible:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:  # Detect spacebar press
+                        game.toggle_rendering()  # Toggle rendering and speed
+                    elif event.key == pygame.K_s:
+                        game_toggle_score = not game_toggle_score
+                    elif event.key == pygame.K_r:
+                        game_toggle_runs = not game_toggle_runs
+                    elif event.key == pygame.K_q:
+                        quitting = True
+                        print("\nBAILING - force pushing metrics...\n")
+                        game_toggle_runs,game_toggle_score =False,False
 
         # if agent.n_games == 2000:
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
@@ -119,38 +134,38 @@ def train():
         curr_score = game.score
         reward_optim.get_metrics(game.score, time_taken, game_over)
 
+
         done = game.is_game_over()
         reward = game.get_reward()
         state_new = agent.get_state(game)
-
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
         agent.remember(state_old, final_move, reward, state_new, done)
-        if done and curr_score > high_score:
-            high_score = curr_score
-            print("Highscore!", high_score)
-        if done and game.get_game_count() % 100 == 0:
-            c += 100
-            print(c, "GAMES")
-
-        if game.get_game_count() % 250 == 0 and done:
-            reward_optim.clean_data(look_at=None)
-            model_metrics = reward_optim.calculate_metrics()
-            reward_optim.commit(0, 100, model_metrics, "NONE", 
-                             "NONE", "NONE", "NONE")
-            print("METRICS:",model_metrics)
-            reward_optim.push()
-            reward_optim.clear_commits()
-            print("PUSHED")
+        game_number = game.get_game_count()
 
         if done:
-            #game.reset()
             agent.n_games += 1
             agent.train_long_memory()
-
-            score = game.score
-            if score > record:
-                record = score
+            if curr_score > high_score:
+                high_score = curr_score
+                print("Highscore!", high_score)
                 agent.model.save()
+            if game_number % 100 == 0:
+                c += 100
+                print(c, "GAMES")
+            if game_toggle_score or game_toggle_runs:
+                print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
+
+            if game_number % 250 == 0 or quitting:
+                reward_optim.clean_data(look_at=None)
+                model_metrics = reward_optim.calculate_metrics()
+                reward_optim.commit(0, 100, model_metrics, "NONE", 
+                                "NONE", "NONE", "NONE")
+                print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
+                reward_optim.push()
+                reward_optim.clear_commits()
+                print("METRICS PUSHED")
+                if quitting: break
+
 
             #print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
