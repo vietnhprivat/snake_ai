@@ -83,16 +83,27 @@ class Snake_Game():
         self.stuck, self.stuck_step = False, 0
     
     def update_danger(self,spos,wx,wy,body):
-        danger = [0,0,0,0]
-        if spos[0] == 0: danger[3] = 1
-        elif spos[0] == wx - 10: danger[2] = 1
-        if spos[1] == 0: danger[0] = 1
-        elif spos[1] == wy - 10: danger[1] = 1
+        danger = [0,0,0]
+        if self.direction == "UP":
+            if spos[1] == 0 or [spos[0], spos[1] - 10] in body: danger[0] = 1
+            if spos[0] == 0 or [spos[0] - 10, spos[1]] in body: danger[1] = 1
+            if spos[0] == wx - 10 or [spos[0] + 10, spos[1]] in body: danger[2] = 1
 
-        if [spos[0] + 10, spos[1]] in body: danger[2] = 1
-        if [spos[0] - 10, spos[1]] in body: danger[3] = 1
-        if [spos[0], spos[1] + 10] in body: danger[1] = 1
-        if [spos[0], spos[1] - 10] in body: danger[0] = 1
+        elif self.direction == "DOWN":
+            if spos[1] == wy - 10 or [spos[0], spos[1] + 10] in body: danger[0] = 1 
+            if spos[0] == 0 or [spos[0] - 10, spos[1]] in body: danger[2] = 1
+            if spos[0] == wx - 10 or [spos[0] + 10, spos[1]] in body: danger[1] = 1
+
+        elif self.direction == "RIGHT":
+            if spos[0] == wx - 10 or [spos[0] + 10, spos[1]] in body: danger[0] = 1
+            if spos[1] == 0 or [spos[0], spos[1] - 10] in body: danger[1] = 1
+            if spos[1] == wy - 10 or [spos[0], spos[1] + 10] in body: danger[2] = 1
+
+        else:
+            if spos[0] == 0 or [spos[0] - 10, spos[1]] in body: danger[0] = 1
+            if spos[1] == 0 or [spos[0], spos[1] - 10] in body: danger[2] = 1
+            if spos[1] == wy - 10 or [spos[0], spos[1] + 10] in body: danger[1] = 1
+        
         return danger
 
     # Observe apple in the four possible next states
@@ -106,11 +117,16 @@ class Snake_Game():
     
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
+        danger_state = self.update_danger(self.snake_position, self.window_x,self.window_y, self.snake_body)
+        direction_state = self.update_direction(self.direction)
+        fruit_state = self.update_fruit(self.snake_position, self.fruit_position)
+
+        # Concatenating states and converting into array
+        # state_array = np.array([danger_state, direction_state, fruit_state])
         if is_tensor:
-            return torch.tensor([self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
-                self.update_fruit(self.snake_position, self.fruit_position)]).to(self.device)
-        return (self.update_danger(self.snake_position, self.window_x,self.window_y,self.snake_body), self.update_direction(self.direction), 
-                self.update_fruit(self.snake_position, self.fruit_position))
+            return torch.tensor(np.concatenate((danger_state,direction_state, fruit_state), dtype=int)).to(self.device)
+
+        return np.concatenate((danger_state,direction_state, fruit_state), dtype=int)
     
     def update_direction(self, input_direction):
         output_direction = [0,0,0,0] # up, down, right, left
