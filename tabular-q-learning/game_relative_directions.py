@@ -367,7 +367,30 @@ class Snake_Game():
             if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
                 return True
         return False
+    
+    def grid(self):
+        # Konvertere spillets koordinater til "rigtige koordinater"
+        x = self.window_x // 10
+        y = self.window_y // 10
+        body = np.array(self.snake_body) // 10
+        fruit = np.array(self.fruit_position) // 10
+        
+        # Lav grid fra canvas
+        grid = np.zeros((y, x), dtype=int)
 
+        # Bug fix da den nogle giver værdier højere end canvas størrelse. np.clip(input, min, max) definere et interval
+        body[:, 0] = np.clip(body[:, 0], 0, x - 1)
+        body[:, 1] = np.clip(body[:, 1], 0, y - 1)
+        
+        # Ændre body og fruit placering i grid til 1
+        grid[body[:, 1], body[:, 0]] = 1
+        fruit = np.clip(fruit, 0, [x - 1, y - 1])  # Ensure fruit coordinates are within bounds
+        grid[fruit[1], fruit[0]] = 1
+        
+        # Konvertere grid til 2D array
+        grid2D = grid.ravel()
+        
+        return grid
 
 class Data():
     def __init__(self):
