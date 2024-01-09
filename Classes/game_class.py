@@ -147,29 +147,40 @@ class Snake_Game():
         if action_index:
             self.getting_moves = True
             direction_local = self.update_direction(self.direction)
-            if direction_local[0] == 1:
-                if action_index[0] == 1: action = "UP"
-                elif action_index[1] == 1: action = "LEFT" 
-                elif action_index[2] == 1: action = "RIGHT"
-
-        
-        # Snake direction syd
-            elif direction_local[1] == 1:
-                if action_index[0] == 1: action = "DOWN"
-                elif action_index[1] == 1: action = "RIGHT" 
-                elif action_index[2] == 1: action = "LEFT"
-
-            # Snake direction øst
-            elif direction_local[2] == 1:
-                if action_index[0] == 1: action = "RIGHT"
-                elif action_index[1] == 1: action = "UP" 
-                elif action_index[2] == 1: action = "DOWN"		
-
-            # Snake direction VEST
+            if self.grid_mode:
+                if action_index[0] == 1:
+                    #Model vil gå nord
+                    action = "UP"
+                elif action_index[1] == 1:
+                    action = "DOWN"
+                elif action_index[2] == 1:
+                    action = "RIGHT"
+                elif action_index[3] == 1:
+                    action = "LEFT"
             else:
-                if action_index[0] == 1: action = "LEFT"
-                elif action_index[1] == 1: action = "DOWN" 
-                elif action_index[2] == 1: action = "UP"	
+                if direction_local[0] == 1:
+                    if action_index[0] == 1: action = "UP"
+                    elif action_index[1] == 1: action = "LEFT" 
+                    elif action_index[2] == 1: action = "RIGHT"
+
+
+            # Snake direction syd
+                elif direction_local[1] == 1:
+                    if action_index[0] == 1: action = "DOWN"
+                    elif action_index[1] == 1: action = "RIGHT" 
+                    elif action_index[2] == 1: action = "LEFT"
+
+                # Snake direction øst
+                elif direction_local[2] == 1:
+                    if action_index[0] == 1: action = "RIGHT"
+                    elif action_index[1] == 1: action = "UP" 
+                    elif action_index[2] == 1: action = "DOWN"		
+
+                # Snake direction VEST
+                else:
+                    if action_index[0] == 1: action = "LEFT"
+                    elif action_index[1] == 1: action = "DOWN" 
+                    elif action_index[2] == 1: action = "UP"	
 
             self.change_to = action
 
@@ -358,16 +369,18 @@ class Snake_Game():
         grid[fruit[1], fruit[0]] = 5
         grid[self.snake_position[1] // 10, self.snake_position[0] // 10] = 2
 
-        to_app = np.full((2,self.window_x), -1)
+        to_app = np.full((2,x), -1)
 
-        grid = np.append(grid, to_app,)
-        np.roll(grid, -1, 0)
+        grid = np.append(grid, to_app, 0)
+        grid = np.roll(grid, 1, 0)
+        to_app_y = np.full((y+2,2), -1)
+        grid = np.concatenate((grid,to_app_y), 1)
+        grid = np.roll(grid, 1, 1)
         
         # Konvertere grid til 2D array
-        # grid2D = grid.ravel()
-        print(grid) #print(grid2D)
+        grid2D = grid.flatten()
         
-        return grid#2D    
+        return grid2D   
 
 
 class Data():
@@ -413,7 +426,7 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game(window_x=200,window_y=200)
+    game = Snake_Game(window_x=200,window_y=200, grid_state=True)
     n = 2
     buffer = Data()
     Transition = namedtuple("Transition",
@@ -421,8 +434,6 @@ if __name__ == "__main__":
     print_grid = True
     while game.get_game_count() < n:
         s1 = game.get_state()
-        game.grid()
-        print(game.snake_position)
         game.move()
         action = game.get_move()
         game.has_apple()
