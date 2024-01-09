@@ -86,3 +86,6 @@ metrics(index=0, mean_score=[0.26133598412758874, 1.8815211587295542], mean_time
 >>>>>>> 2c3d36c9e9b1f01bb2840490c5a749f8fc70de0b
 metrics(index=0, mean_score=[0.0, 0.0], mean_time_apple=[-1.0, -1.0], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
 metrics(index=0, mean_score=[0.0, 0.0], mean_time_apple=[-1.0, -1.0], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
+metrics(index=0, mean_score=[130.57164162567835, 170.06835837432163], mean_time_apple=[21.760263880085205, 28.440374757487973], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
+metrics(index=0, mean_score=[197.04524041501688, 224.83475958498312], mean_time_apple=[21.756343549029143, 25.090721967231406], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
+metrics(index=0, mean_score=[217.53595123024138, 239.4929346019457], mean_time_apple=[21.82978074310906, 24.290968068062913], runs=100, file_path='NONE', step_punish='NONE', apple_reward='NONE', death_punish='NONE')
