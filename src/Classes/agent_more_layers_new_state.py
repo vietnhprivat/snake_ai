@@ -11,12 +11,12 @@ import torch.cuda
 
 
 MAX_MEMORY = 10_000
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 LR = 0.001
 
 class Agent:
     def __init__(self):
-        self.device = 'cpu' #torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1  # randomness
@@ -81,8 +81,8 @@ def train():
     plot_scores = []
     total_score = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=90, step_punish=1, snake_length=4, death_punish=-120, grid_state=True, backstep=True)
+    game = Snake_Game(snake_speed=5000, render=False, kill_stuck=True, window_x=300, window_y=300,
+                      apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120, grid_state=True, backstep=False)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
@@ -142,7 +142,7 @@ def train():
             if curr_score > high_score:
                 high_score = curr_score
                 print("Highscore!", high_score)
-                agent.model.save(index=1)
+                agent.model.save(index="new_state_multi")
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")

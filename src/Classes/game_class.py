@@ -492,7 +492,7 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game(window_x=300,window_y=300, snake_speed=15)
+    game = Snake_Game(window_x=200,window_y=200, snake_speed=15)
     n = 1
     buffer = Data()
     Transition = namedtuple("Transition",
@@ -500,6 +500,7 @@ if __name__ == "__main__":
     print_grid = True
     while game.get_game_count() < n:
         s1 = game.get_state()
+        print(len(game.grid() ))
         game.get_state_vector()
         game.move()
         action = game.get_move()

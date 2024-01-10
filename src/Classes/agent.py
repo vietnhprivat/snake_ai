@@ -10,7 +10,7 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 1600
+MAX_MEMORY = 10000
 BATCH_SIZE = 32
 LR = 0.01
 
@@ -72,7 +72,7 @@ def train():
     plot_scores = []
     total_score = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=200, window_y=200,
+    game = Snake_Game(snake_speed=5000, render=False, kill_stuck=True, window_x=200, window_y=200,
                       apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1

@@ -23,7 +23,7 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
-        self.model = Linear_QNet(21,256, 4).to(self.device) 
+        self.model = Linear_QNet(21, 256, 4).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.epsilon_decay = 0.9999  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
@@ -142,7 +142,7 @@ def train():
             if curr_score > high_score:
                 high_score = curr_score
                 print("Highscore!", high_score)
-                agent.model.save(index="new_state_single_negative")
+                agent.model.save(index="new_state_single_positive")
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")

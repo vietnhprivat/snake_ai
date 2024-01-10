@@ -10,8 +10,8 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 3200
-BATCH_SIZE = 64
+MAX_MEMORY = 10000
+BATCH_SIZE = 32
 LR = 0.001
 
 class Agent:
@@ -23,7 +23,7 @@ class Agent:
         self.gamma = 0.95  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
-        self.model = Linear_QNet(1024, 256, 4).to(self.device) 
+        self.model = Linear_QNet(484, 256, 4).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.epsilon_decay = 0.99995  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
@@ -72,7 +72,7 @@ def train():
     plot_scores = []
     total_score = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=200, window_y=200,
+    game = Snake_Game(snake_speed=5000, render=False, kill_stuck=True, window_x=200, window_y=200,
                       apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120, grid_state=True)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
@@ -133,7 +133,7 @@ def train():
             if curr_score > high_score:
                 high_score = curr_score
                 print("Highscore!", high_score)
-                agent.model.save(index=1)
+                agent.model.save(index="grid_negative")
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")

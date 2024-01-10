@@ -10,27 +10,27 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 10_000
+MAX_MEMORY = 10000
 BATCH_SIZE = 32
-LR = 0.001
+LR = 0.01
 
 class Agent:
     def __init__(self):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = 'cpu' #torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
-        self.model = Linear_QNet(21,256, 4).to(self.device) 
+        self.model = Linear_QNet(11, 256, 3).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.9999  # Decaying rate per game
+        self.epsilon_decay = 0.99  # Decaying rate per game
         self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
-        return game.get_state_vector()
-        # return game.get_state()
+        # return game.grid()
+        return game.get_state()
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -49,26 +49,17 @@ class Agent:
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
-    def get_action(self, state, game):
+    def get_action(self, state):
         # Update epsilon value
         self.epsilon = max(self.epsilon_min, self.epsilon_decay * self.epsilon)  # decay epsilon
         
-        final_move = [0,0,0,0]
+        final_move = [0,0,0]
         if random.random() < self.epsilon:
-            move = random.randint(0, 3)  # Assuming 3 actions
+            move = random.randint(0, 2)  # Assuming 3 actions
             final_move[move] = 1
         else:
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
-            if game.backstep == True:
-                available_moves = np.array((0,0,0,0))
-                if game.direction == "UP": available_moves[1] = 1
-                elif game.direction == "DOWN": available_moves[0] = 1
-                elif game.direction == "RIGHT": available_moves[3] = 1
-                elif game.direction == "LEFT": available_moves[2] = 1
-                index = np.argmax(available_moves)
-                prediction[index] = -10000
-
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
@@ -82,7 +73,7 @@ def train():
     total_score = 0
     agent = Agent()
     game = Snake_Game(snake_speed=5000, render=False, kill_stuck=True, window_x=200, window_y=200,
-                      apple_reward=90, step_punish=1, snake_length=4, death_punish=-120, grid_state=True, backstep=False)
+                      apple_reward=90, step_punish=1, snake_length=4, death_punish=-120)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
@@ -92,7 +83,6 @@ def train():
         pygame.init()
         game.toggle_rendering()
     game_toggle_score, game_toggle_runs, quitting = False, False, False
-    toggle_epsilon, toggle_highscore = False, False
     while True:
         step_counter += 1
         if game.toggle_possible:
@@ -112,16 +102,12 @@ def train():
                         game.snake_speed += 5
                     elif event.key == pygame.K_DOWN:
                         game.snake_speed -=5
-                    elif event.key == pygame.K_e:
-                        toggle_epsilon = True
-                    elif event.key == pygame.K_h:
-                        toggle_highscore = True
 
         # if agent.n_games == 2000:
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
         #               apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
         state_old = agent.get_state(game)
-        final_move = agent.get_action(state_old, game)
+        final_move = agent.get_action(state_old)
         game.move(final_move)  # make a move
         # game.has_apple()
         time_taken, game_over = game.has_apple(), game.is_game_over_bool()
@@ -142,17 +128,14 @@ def train():
             if curr_score > high_score:
                 high_score = curr_score
                 print("Highscore!", high_score)
-                agent.model.save(index="new_state_single_negative")
+                agent.model.save(index="11_states_positive")
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")
             if game_toggle_score or game_toggle_runs:
                 print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
 
-
             if game_number % 250 == 0 or quitting:
-                if toggle_highscore or toggle_epsilon:
-                    print(f"EPSILON: {agent.epsilon}"*toggle_epsilon,f"HIGHSCORE: {high_score}"*toggle_highscore)
                 reward_optim.clean_data(look_at=None)
                 model_metrics = reward_optim.calculate_metrics()
                 reward_optim.commit(0, 100, model_metrics, "NONE", 
