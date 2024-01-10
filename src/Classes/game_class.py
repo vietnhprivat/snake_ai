@@ -10,7 +10,8 @@ import math
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
                  window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True,
-                 grid_state=False, reward_closer=0):
+                 grid_state=False, reward_closer=0, backstep = False):
+        self.backstep = backstep
         self.snake_speed = snake_speed
         self.grid_mode = grid_state
 

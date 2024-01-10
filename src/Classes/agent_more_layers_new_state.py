@@ -20,13 +20,13 @@ class Agent:
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1  # randomness
-        self.gamma = 0.95  # discount rate
+        self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         # Assuming Linear_QNet and QTrainer are defined in the model
         self.model = Linear_QNet(21, 4).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.99995  # Decaying rate per game
-        self.epsilon_min = 0.01  # Minimum value of epsilon
+        self.epsilon_decay = 0.9999  # Decaying rate per game
+        self.epsilon_min = 0.001  # Minimum value of epsilon
 
     def get_state(self, game):
         return game.get_state_vector()
@@ -49,7 +49,7 @@ class Agent:
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
-    def get_action(self, state):
+    def get_action(self, state, game):
         # Update epsilon value
         self.epsilon = max(self.epsilon_min, self.epsilon_decay * self.epsilon)  # decay epsilon
         
@@ -60,7 +60,20 @@ class Agent:
         else:
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
+
+            available_moves = np.array((0,0,0,0))
+            print("game direction:", game.direction)
+            if game.direction == "UP": available_moves[1] = 1
+            elif game.direction == "DOWN": available_moves[0] = 1
+            elif game.direction == "RIGHT": available_moves[3] = 1
+            elif game.direction == "LEFT": available_moves[2] = 1
+            index = np.argmax(available_moves)
+            print("game_index:", index)
+            prediction[index] = -10000
+            print("predicetion:", prediction)
+
             move = torch.argmax(prediction).item()
+            print("game move:", move)
             final_move[move] = 1
 
         return final_move
@@ -73,7 +86,7 @@ def train():
     total_score = 0
     agent = Agent()
     game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
-                      apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120, grid_state=True)
+                      apple_reward=90, step_punish=1, snake_length=4, death_punish=-120, grid_state=True, backstep=True)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
     c = 0
@@ -112,7 +125,7 @@ def train():
         #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
         #               apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
         state_old = agent.get_state(game)
-        final_move = agent.get_action(state_old)
+        final_move = agent.get_action(state_old, game)
         game.move(final_move)  # make a move
         # game.has_apple()
         time_taken, game_over = game.has_apple(), game.is_game_over_bool()
