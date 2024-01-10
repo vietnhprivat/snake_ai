@@ -72,7 +72,7 @@ def train():
     plot_scores = []
     total_score = 0
     agent = Agent()
-    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=300, window_y=300,
+    game = Snake_Game(snake_speed=5000, render=True, kill_stuck=True, window_x=200, window_y=200,
                       apple_reward=90, step_punish=-7, snake_length=4, death_punish=-120)
     reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
     high_score = -1
@@ -128,7 +128,7 @@ def train():
             if curr_score > high_score:
                 high_score = curr_score
                 print("Highscore!", high_score)
-                agent.model.save()
+                agent.model.save(index="11_states_negative")
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")
