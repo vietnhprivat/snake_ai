@@ -137,13 +137,13 @@ def train():
             if game_number % 100 == 0:
                 c += 100
                 print(c, "GAMES")
-            if game_toggle_score or game_toggle_runs:
-                print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
+            if game_toggle_score or game_toggle_runs: pass
+                # print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
 
 
             if game_number % 250 == 0 or quitting:
-                if toggle_highscore or toggle_epsilon:
-                    print(f"EPSILON: {agent.epsilon}"*toggle_epsilon,f"HIGHSCORE: {high_score}"*toggle_highscore)
+                if toggle_highscore or toggle_epsilon: pass
+                    # print(f"EPSILON: {agent.epsilon}"*toggle_epsilon,f"HIGHSCORE: {high_score}"*toggle_highscore)
                 reward_optim.clean_data(look_at=None)
                 model_metrics = reward_optim.calculate_metrics()
                 reward_optim.commit(0, 100, model_metrics, "NONE", 

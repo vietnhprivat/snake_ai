@@ -10,7 +10,7 @@ import torch.cuda
 
 
 
-MAX_MEMORY = 10_000
+MAX_MEMORY = 10000
 BATCH_SIZE = 32
 LR = 0.001
 
