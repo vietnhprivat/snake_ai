@@ -4,18 +4,20 @@ import torch
 import importlib
 pygame = None
 import numpy as np
+import math
 
 
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
                  window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True,
-                 grid_state=False):
+                 grid_state=False, reward_closer=0):
         self.snake_speed = snake_speed
         self.grid_mode = grid_state
 
         # Window size
         self.window_x = window_x
         self.window_y = window_y
+        self.direction_space = ["UP", "DOWN", "RIGHT", "LEFT"]
 
         self.device = 'cpu' #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.snake_length = snake_length
@@ -46,9 +48,9 @@ class Snake_Game():
 
         self.reset()
         self.curr_action = self.direction
-        self.reward_apple, self.punish_no_apple, self.punish_death = apple_reward, step_punish, death_punish
+        self.reward_apple, self.punish_no_apple, self.punish_death, self.reward_closer= apple_reward, step_punish, death_punish, reward_closer
         self.reward = 0
-        self.action_space = [[1,0,0], [0,1,0], [0,0,1]]
+        self.action_space = [[1,0,0], [0,1,0], [0,0,1]] if not self.grid_mode else [[1,0,0,0], [0,1,0,0],[0,0,1,0],[0,0,0,1]]
         self.stuck_step = 0
         self.stuck = False
 
@@ -74,13 +76,20 @@ class Snake_Game():
             return "WINNER"
 
     def reset(self):
-        self.snake_position = [random.randrange(self.snake_length, (self.window_x//10)-10) * 10, random.randrange(1, (self.window_y//10)) * 10]
-        self.snake_body = [[self.snake_position[0] - 10*i,self.snake_position[1]] for i in range(self.snake_length)]
+        self.direction = self.direction_space[random.randint(0,3)]
+        self.change_to = self.direction
+        self.snake_position = [random.randrange(self.snake_length*2, (self.window_x//10)-self.snake_length*2) * 10, random.randrange(self.snake_length*2, (self.window_y//10)-self.snake_length*2) * 10]
+        if self.direction == "RIGHT":
+            self.snake_body = [[self.snake_position[0] - 10*i,self.snake_position[1]] for i in range(self.snake_length)]
+        elif self.direction == "LEFT":
+            self.snake_body = [[self.snake_position[0] + 10*i,self.snake_position[1]] for i in range(self.snake_length)]
+        elif self.direction == "UP":
+            self.snake_body = [[self.snake_position[0],self.snake_position[1] + 10*i] for i in range(self.snake_length)]
+        elif self.direction == "DOWN":
+            self.snake_body = [[self.snake_position[0],self.snake_position[1] - 10*i] for i in range(self.snake_length)]
         self.fruit_position = self.spawn_apple(self.snake_body)
         self.fruit_spawn = True
         self.score = 0
-        self.direction = 'RIGHT'
-        self.change_to = self.direction
         self.time_steps = 0
         self.stuck, self.stuck_step = False, 0
     
@@ -120,6 +129,7 @@ class Snake_Game():
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
         if self.grid_mode:
+            if is_tensor: return torch.tensor((self.grid()),dtype=int).to(self.device)
             return self.grid()
         danger_state = self.update_danger(self.snake_position, self.window_x,self.window_y, self.snake_body)
         direction_state = self.update_direction(self.direction)
@@ -142,7 +152,8 @@ class Snake_Game():
     
     
     def move(self, action_index = None):
-        self.reward = -1
+        curr_dist = math.dist(self.snake_position, self.fruit_position)
+        self.reward = self.punish_no_apple
         self.stuck_step += 1
         if action_index:
             self.getting_moves = True
@@ -213,6 +224,9 @@ class Snake_Game():
         elif self.direction == 'LEFT':
             self.snake_position[0] -= 10
         self.time_steps += 1
+        new_dist = math.dist(self.snake_position, self.fruit_position)
+        if new_dist < curr_dist:
+            self.reward += self.reward_closer
         self.curr_action = self.direction
         self.snake_body.insert(0, list(self.snake_position))
         if self.should_render: self.render()
@@ -426,8 +440,8 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game(window_x=200,window_y=200, grid_state=True)
-    n = 2
+    game = Snake_Game(window_x=300,window_y=300, snake_speed=5)
+    n = 10
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
