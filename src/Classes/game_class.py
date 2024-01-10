@@ -404,10 +404,10 @@ class Snake_Game():
         head_cordinates = np.array((head_x, head_y))
 
         # Æble koordinater
-        local_fruit_position = np.array(self.fruit_position)
+        local_fruit_position = np.array(self.fruit_position) // 10
 
         # Distance mellem slangen og æble
-        distance = np.linalg.norm(head_cordinates, local_fruit_position)
+        distance = np.linalg.norm(head_cordinates - local_fruit_position)
 
         # Retningsvektor
         local_direction = self.update_direction(self.direction)
@@ -422,14 +422,28 @@ class Snake_Game():
         elif self.direction == "LEFT": available_moves[2] = 0
     
         # Wall danger
+        wall_danger = np.array((0,0,0,0))
+        if self.snake_position[0] == 0: wall_danger[3] = 1
+        if self.snake_position[0] == self.window_x - 10: wall_danger[2] = 1
+        if self.snake_position[1] == 0: wall_danger[0] = 1
+        if self.snake_position[1] == self.window_y - 10: wall_danger[1] = 1
+
+        # Body danger
+        body_danger = np.array((0,0,0,0))
+        if [self.snake_position[0] + 10, self.snake_position[1]] in self.snake_body: body_danger[2] = 1
+        if [self.snake_position[0] - 10, self.snake_position[1]] in self.snake_body: body_danger[3] = 1
+        if [self.snake_position[0], self.snake_position[1] + 10] in self.snake_body: body_danger[1] = 1
+        if [self.snake_position[0], self.snake_position[1] - 10] in self.snake_body: body_danger[0] = 1
         
+        # Shortest distance from head to snake’s segments
+        # print(f"head_cord: {head_cordinates}, fruit: {local_fruit_position}, distance: {distance}")
+              
+        # print(f"head_cord: {head_cordinates}, distance: {distance}, local_direction {local_direction}, available moves: {available_moves}, wall: {wall_danger}, body {body_danger}")
+        
+        state_output = np.concatenate((head_cordinates, local_fruit_position, distance, local_direction, available_moves, wall_danger, body_danger), axis = None)
 
-        # Korteste 
+        return state_output
 
-        # Slange body danger
-
-
-        return
 
 
 
@@ -477,14 +491,15 @@ class Data():
                     self.write_to_file(should_write, game)
 
 if __name__ == "__main__":
-    game = Snake_Game(window_x=300,window_y=300, snake_speed=5)
-    n = 10
+    game = Snake_Game(window_x=300,window_y=300, snake_speed=15)
+    n = 1
     buffer = Data()
     Transition = namedtuple("Transition",
                             ("state","action","reward","next_state"))
     print_grid = True
     while game.get_game_count() < n:
         s1 = game.get_state()
+        game.get_state_vector()
         game.move()
         action = game.get_move()
         game.has_apple()
