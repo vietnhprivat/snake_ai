@@ -26,7 +26,7 @@ class Agent:
         self.model = Linear_QNet(21, 4).to(self.device) 
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.epsilon_decay = 0.9999  # Decaying rate per game
-        self.epsilon_min = 0.001  # Minimum value of epsilon
+        self.epsilon_min = 0.01  # Minimum value of epsilon
 
     def get_state(self, game):
         return game.get_state_vector()
@@ -60,20 +60,16 @@ class Agent:
         else:
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
-
-            available_moves = np.array((0,0,0,0))
-            print("game direction:", game.direction)
-            if game.direction == "UP": available_moves[1] = 1
-            elif game.direction == "DOWN": available_moves[0] = 1
-            elif game.direction == "RIGHT": available_moves[3] = 1
-            elif game.direction == "LEFT": available_moves[2] = 1
-            index = np.argmax(available_moves)
-            print("game_index:", index)
-            prediction[index] = -10000
-            print("predicetion:", prediction)
+            if game.backstep == True:
+                available_moves = np.array((0,0,0,0))
+                if game.direction == "UP": available_moves[1] = 1
+                elif game.direction == "DOWN": available_moves[0] = 1
+                elif game.direction == "RIGHT": available_moves[3] = 1
+                elif game.direction == "LEFT": available_moves[2] = 1
+                index = np.argmax(available_moves)
+                prediction[index] = -10000
 
             move = torch.argmax(prediction).item()
-            print("game move:", move)
             final_move[move] = 1
 
         return final_move
