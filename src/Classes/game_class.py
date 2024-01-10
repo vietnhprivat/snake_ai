@@ -394,7 +394,44 @@ class Snake_Game():
         # Konvertere grid til 2D array
         grid2D = grid.flatten()
         
-        return grid2D   
+        return grid2D
+    
+    def get_state_vector(self):
+        
+        # Hoved koordinater
+        head_x = self.snake_position[0] // 10
+        head_y = self.snake_position[1] // 10
+        head_cordinates = np.array((head_x, head_y))
+
+        # Æble koordinater
+        local_fruit_position = np.array(self.fruit_position)
+
+        # Distance mellem slangen og æble
+        distance = np.linalg.norm(head_cordinates, local_fruit_position)
+
+        # Retningsvektor
+        local_direction = self.update_direction(self.direction)
+
+        # Boolean flag, om slange krop er mellem hovedet og æble
+
+        # Mulige movement space
+        available_moves = np.array((1,1,1,1))
+        if self.direction == "UP": available_moves[1] = 0
+        elif self.direction == "DOWN": available_moves[0] = 0
+        elif self.direction == "RIGHT": available_moves[3] = 0
+        elif self.direction == "LEFT": available_moves[2] = 0
+    
+        # Wall danger
+        
+
+        # Korteste 
+
+        # Slange body danger
+
+
+        return
+
+
 
 
 class Data():
