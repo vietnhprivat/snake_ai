@@ -10,10 +10,11 @@ import math
 class Snake_Game():
     def __init__(self, render=True, write_data = False, apple_reward = 50, step_punish = -1, death_punish = -100, 
                  window_x = 720, window_y = 480, snake_speed = 15, snake_length = 4, force_write_data = False, kill_stuck = True,
-                 grid_state=False, reward_closer=0, backstep = False):
+                  reward_closer=0, backstep = False, state_rep = "onestep"):
         self.backstep = backstep
         self.snake_speed = snake_speed
-        self.grid_mode = grid_state
+        self.state_rep = state_rep
+        self.grid_mode = True if self.state_rep == "grid" else False
 
         # Window size
         self.window_x = window_x
@@ -51,7 +52,7 @@ class Snake_Game():
         self.curr_action = self.direction
         self.reward_apple, self.punish_no_apple, self.punish_death, self.reward_closer= apple_reward, step_punish, death_punish, reward_closer
         self.reward = 0
-        self.action_space = [[1,0,0], [0,1,0], [0,0,1]] if not self.grid_mode else [[1,0,0,0], [0,1,0,0],[0,0,1,0],[0,0,0,1]]
+        self.action_space = [[1,0,0], [0,1,0], [0,0,1]] if self.state_rep == "onestep" else [[1,0,0,0], [0,1,0,0],[0,0,1,0],[0,0,0,1]]
         self.stuck_step = 0
         self.stuck = False
 
@@ -132,6 +133,8 @@ class Snake_Game():
         if self.grid_mode:
             if is_tensor: return torch.tensor((self.grid()),dtype=int).to(self.device)
             return self.grid()
+        if self.state_rep == "vector":
+            return self.get_state_vector()
         danger_state = self.update_danger(self.snake_position, self.window_x,self.window_y, self.snake_body)
         direction_state = self.update_direction(self.direction)
         fruit_state = self.update_fruit(self.snake_position, self.fruit_position)
@@ -159,7 +162,7 @@ class Snake_Game():
         if action_index:
             self.getting_moves = True
             direction_local = self.update_direction(self.direction)
-            if self.grid_mode:
+            if self.grid_mode or self.state_rep == 'vector':
                 if action_index[0] == 1:
                     #Model vil gå nord
                     action = "UP"
