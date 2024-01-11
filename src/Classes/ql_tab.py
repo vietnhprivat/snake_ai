@@ -30,7 +30,7 @@ class Q_learning:
 
     def get_q_current(self):
         state = self.game.get_state()
-        return self.Q[tuple(state[0]),tuple(state[1]),tuple(state[2])]
+        return self.Q[tuple(state)]
     
     def get_action(self):
         return np.argmax(self.get_q_current())

@@ -1,6 +1,6 @@
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
-from Classes.ql_tab import Q_learning
+from ql_tab import Q_learning
 import random
 from collections import namedtuple
 
@@ -68,7 +68,7 @@ class ModelOptimizer():
             model_file_path = f'{self.model_folder_path}{model_file_path}'
 
             # Initialiserer et spil med de valgte rewards og en model, der træner.
-            game = Snake_Game(kill_stuck=True,render=False, step_punish=step_reward, apple_reward=apple_reward)
+            game = Snake_Game(kill_stuck=True,render=False, step_punish=step_reward, apple_reward=apple_reward, window_x=200, window_y=200)
             model = Q_learning(game, training=True, file_path=model_file_path)
             # Fortæl, hvilken model, vi arbejder på, og træn den. ser lige nu på de sidste 250 runs.
             print(f"Training model {i}. Step reward: {step_reward}. Apple_reward: {apple_reward}.\n")
@@ -171,11 +171,11 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(1) 
+    model_optimizer = ModelOptimizer(25,model_folder_path='src\Classes\TQL\model_files\\', metric_folder_path='src\Classes\TQL\metric_files\metric_test.txt') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(2000,800)
+    model_optimizer.Train_Models(100,80)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
