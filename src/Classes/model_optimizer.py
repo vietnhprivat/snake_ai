@@ -66,7 +66,7 @@ class ModelOptimizer():
             closer_reward = random.randint(0, 10)
 
             # Laver en path, hvor selve modellen gemmes.
-            model_file_path = f'model_{i+models_in_file}_step_{step_reward}_apple_{apple_reward}.pkl'
+            model_file_path = f'model_{i+models_in_file}_step_{step_reward}_apple_{apple_reward}_closer_{closer_reward}_death_{death_reward}.pkl'
             model_file_path = f'{self.model_folder_path}{model_file_path}'
 
             # Initialiserer et spil med de valgte rewards og en model, der træner.
@@ -175,12 +175,11 @@ class ModelOptimizer():
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
     model_optimizer = ModelOptimizer(500,model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
-                                     metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
-    
+                                    metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(1200,800)
+    model_optimizer.Train_Models(10,8)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter

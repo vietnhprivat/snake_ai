@@ -18,7 +18,7 @@ class RewardOptimizer():
         #Opretter en names tuple til informationer om modeller, vi vil gemme.
         self.metrics = namedtuple('metrics',
                                   ('index','mean_score','mean_time_apple', 'runs', 'file_path', 
-                                   'step_punish', 'apple_reward', 'death_punish'))
+                                   'step_punish', 'apple_reward', 'death_punish', 'closer_reward'))
         
         #Stack er en liste over alle modellers metrics
         self.stack = []
@@ -63,9 +63,9 @@ class RewardOptimizer():
 
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
         # Sender også data om spil/model som fx de rewards, der blev brugt
-    def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish):
+    def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish, closer_reward):
         to_append = self.metrics(index, calculated_metrics[0], calculated_metrics[1], runs, file_path, 
-                                 step_punish, apple_reward, death_punish)
+                                 step_punish, apple_reward, death_punish, closer_reward)
         self.stack.append(to_append)
 
     def clear_commits(self):
