@@ -101,6 +101,7 @@ class Agent:
         if plot_file_path is not None:
             scores_to_plot = []
             mean_score_to_plot = []
+            scores_sum = 0
         high_score = -1
         c = 0
         step_counter = 0
@@ -152,7 +153,8 @@ class Agent:
             if done:
                 if plot_file_path is not None:
                     scores_to_plot.append(curr_score)
-                    mean_score_to_plot.append(sum(scores_to_plot)/len(scores_to_plot))
+                    scores_sum += curr_score
+                    mean_score_to_plot.append(scores_sum/len(scores_to_plot))
                 game_number = self.game.get_game_count()
                 if rounds_to_play: 
                     if rounds_to_play == game_number: quitting = True
