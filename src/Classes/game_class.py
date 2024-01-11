@@ -21,7 +21,9 @@ class Snake_Game():
         self.window_y = window_y
         self.direction_space = ["UP", "DOWN", "RIGHT", "LEFT"]
 
+        # Run system on CPU or GPU
         self.device = 'cpu' #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         self.snake_length = snake_length
         self.kill_stuck = kill_stuck
 
@@ -30,6 +32,7 @@ class Snake_Game():
         self.force_write_data = force_write_data
         self.should_render = render
         self.game_count = 0
+
         # Initialise game window
         if self.should_render:
             self.pygame = importlib.import_module('pygame')
@@ -56,31 +59,37 @@ class Snake_Game():
         self.stuck_step = 0
         self.stuck = False
 
-        #Tjekker i action om vi bliver feedet med træk
+        # Checks action for movement feedback
         self.getting_moves = False
 
-        #Æble-spawn funktion
+    ## Apple spawn function
     def spawn_apple(self, snake_coordinates):
-        #Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
-        #Her får alle koordinater værdien 1
+        # Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
+        # Her får alle koordinater værdien 1
         apple_grid = np.ones((int(self.window_x/10), int(self.window_y/10)))
 
-        #Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
+        # Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
         snake_positions = np.array(snake_coordinates) // 10
         apple_grid[snake_positions[:, 0],snake_positions[:, 1]] = 0
-        #Skaber en liste over de koordinater, der ikke er en slange på
+
+        # Skaber en liste over de koordinater, der ikke er en slange på
         free_coordinates = np.argwhere(apple_grid == 1)
-        #Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
+
+        # Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
         if len(free_coordinates) > 0:
              chosen_coordinate = free_coordinates[random.randint(0, len(free_coordinates) - 1)] * 10
              return chosen_coordinate[0], chosen_coordinate[1]
         else: 
             return "WINNER"
 
+    ## Reset function
     def reset(self):
         self.direction = self.direction_space[random.randint(0,3)]
         self.change_to = self.direction
+        ## Defines snake's head position
         self.snake_position = [random.randrange(self.snake_length*2, (self.window_x//10)-self.snake_length*2) * 10, random.randrange(self.snake_length*2, (self.window_y//10)-self.snake_length*2) * 10]
+
+        ## Defines snake's body position
         if self.direction == "RIGHT":
             self.snake_body = [[self.snake_position[0] - 10*i,self.snake_position[1]] for i in range(self.snake_length)]
         elif self.direction == "LEFT":
@@ -94,7 +103,11 @@ class Snake_Game():
         self.score = 0
         self.time_steps = 0
         self.stuck, self.stuck_step = False, 0
-    
+
+
+    ## Danger function
+    ## Function determines whether there is danger in the "block" next to the snake's head and/or right in front of it. 
+    ## The danger can either be the "walls" of the environment og the snake's body.
     def update_danger(self,spos,wx,wy,body):
         danger = [0,0,0]
         if self.direction == "UP":
@@ -119,7 +132,8 @@ class Snake_Game():
         
         return danger
 
-    # Observe apple in the four possible next states
+    ## Observe apple function
+    ## Observe apple in the four possible next states (up, down, right, left)
     def update_fruit(self, spos,fpos):
         fruit = [0,0,0,0]
         if spos[0] < fpos[0]: fruit[2] = 1
@@ -128,6 +142,8 @@ class Snake_Game():
         elif spos[1] > fpos[1]: fruit[0] = 1
         return fruit
     
+    ## Gather state function
+    ## This function gathers the state of the snake. It can either be "vector", "grid" or "onestep"
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
         if self.grid_mode:
@@ -146,6 +162,8 @@ class Snake_Game():
 
         return np.concatenate((danger_state,direction_state, fruit_state), dtype=int)
     
+    ## Direction function
+    ## Updates the current direction of the snake
     def update_direction(self, input_direction):
         output_direction = [0,0,0,0] # up, down, right, left
         if input_direction == "UP": output_direction[0] = 1
@@ -155,6 +173,7 @@ class Snake_Game():
         return output_direction
     
     
+    ## Move function
     def move(self, action_index = None):
         curr_dist = math.dist(self.snake_position, self.fruit_position)
         self.reward = self.punish_no_apple
@@ -164,16 +183,19 @@ class Snake_Game():
             direction_local = self.update_direction(self.direction)
             if self.grid_mode or self.state_rep == 'vector':
                 if action_index[0] == 1:
-                    #Model vil gå nord
+                    # Snake wants to go North
                     if self.direction == "DOWN": action = self.direction
                     else: action = "UP"
                 elif action_index[1] == 1:
+                    # Snake wants to go South
                     if self.direction == "UP": action = self.direction
                     else: action = "DOWN"
                 elif action_index[2] == 1:
+                    # Snake wants to go East
                     if self.direction == "LEFT": action = self.direction
                     else: action = "RIGHT"
                 elif action_index[3] == 1:
+                    # Snake wants to go West
                     if self.direction == "RIGHT": action = self.direction
                     else: action = "LEFT"
             else:
