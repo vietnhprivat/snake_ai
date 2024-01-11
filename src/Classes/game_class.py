@@ -21,7 +21,9 @@ class Snake_Game():
         self.window_y = window_y
         self.direction_space = ["UP", "DOWN", "RIGHT", "LEFT"]
 
+        # Run system on CPU or GPU
         self.device = 'cpu' #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         self.snake_length = snake_length
         self.kill_stuck = kill_stuck
 
@@ -30,6 +32,7 @@ class Snake_Game():
         self.force_write_data = force_write_data
         self.should_render = render
         self.game_count = 0
+
         # Initialise game window
         if self.should_render:
             self.pygame = importlib.import_module('pygame')
@@ -56,31 +59,37 @@ class Snake_Game():
         self.stuck_step = 0
         self.stuck = False
 
-        #Tjekker i action om vi bliver feedet med træk
+        # Checks action for movement feedback
         self.getting_moves = False
 
-        #Æble-spawn funktion
+    ## Apple spawn function
     def spawn_apple(self, snake_coordinates):
-        #Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
-        #Her får alle koordinater værdien 1
+        # Laver en liste med lister, hvor hvert element repræsenterer et koordinat:
+        # Her får alle koordinater værdien 1
         apple_grid = np.ones((int(self.window_x/10), int(self.window_y/10)))
 
-        #Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
+        # Tager koordinaterne fra slangens krop og giver disse koordinater værdien 0
         snake_positions = np.array(snake_coordinates) // 10
         apple_grid[snake_positions[:, 0],snake_positions[:, 1]] = 0
-        #Skaber en liste over de koordinater, der ikke er en slange på
+
+        # Skaber en liste over de koordinater, der ikke er en slange på
         free_coordinates = np.argwhere(apple_grid == 1)
-        #Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
+
+        # Hvis der er ledige koordinater, vælger vi et tilfældigt ledigt koordinat 
         if len(free_coordinates) > 0:
              chosen_coordinate = free_coordinates[random.randint(0, len(free_coordinates) - 1)] * 10
              return chosen_coordinate[0], chosen_coordinate[1]
         else: 
             return "WINNER"
 
+    ## Reset function
     def reset(self):
         self.direction = self.direction_space[random.randint(0,3)]
         self.change_to = self.direction
+        ## Defines snake's head position
         self.snake_position = [random.randrange(self.snake_length*2, (self.window_x//10)-self.snake_length*2) * 10, random.randrange(self.snake_length*2, (self.window_y//10)-self.snake_length*2) * 10]
+
+        ## Defines snake's body position
         if self.direction == "RIGHT":
             self.snake_body = [[self.snake_position[0] - 10*i,self.snake_position[1]] for i in range(self.snake_length)]
         elif self.direction == "LEFT":
@@ -94,7 +103,11 @@ class Snake_Game():
         self.score = 0
         self.time_steps = 0
         self.stuck, self.stuck_step = False, 0
-    
+
+
+    ## Danger function
+    ## Function determines whether there is danger in the "block" next to the snake's head and/or right in front of it. 
+    ## The danger can either be the "walls" of the environment og the snake's body.
     def update_danger(self,spos,wx,wy,body):
         danger = [0,0,0]
         if self.direction == "UP":
@@ -119,7 +132,8 @@ class Snake_Game():
         
         return danger
 
-    # Observe apple in the four possible next states
+    ## Observe apple function
+    ## Observe apple in the four possible next states (up, down, right, left)
     def update_fruit(self, spos,fpos):
         fruit = [0,0,0,0]
         if spos[0] < fpos[0]: fruit[2] = 1
@@ -128,6 +142,8 @@ class Snake_Game():
         elif spos[1] > fpos[1]: fruit[0] = 1
         return fruit
     
+    ## Gather state function
+    ## This function gathers the state of the snake. It can either be "vector", "grid" or "onestep"
     def get_state(self, is_tensor=False, game_over=False):
         if game_over: return None
         if self.grid_mode:
@@ -146,6 +162,8 @@ class Snake_Game():
 
         return np.concatenate((danger_state,direction_state, fruit_state), dtype=int)
     
+    ## Direction function
+    ## Updates the current direction of the snake
     def update_direction(self, input_direction):
         output_direction = [0,0,0,0] # up, down, right, left
         if input_direction == "UP": output_direction[0] = 1
@@ -155,6 +173,7 @@ class Snake_Game():
         return output_direction
     
     
+    ## Move function
     def move(self, action_index = None):
         curr_dist = math.dist(self.snake_position, self.fruit_position)
         self.reward = self.punish_no_apple
@@ -164,38 +183,41 @@ class Snake_Game():
             direction_local = self.update_direction(self.direction)
             if self.grid_mode or self.state_rep == 'vector':
                 if action_index[0] == 1:
-                    #Model vil gå nord
+                    # Snake wants to go North
                     if self.direction == "DOWN": action = self.direction
-                    else: action = "UP"
+                    else: action = "UP" # Eliminates the option to go the opposite direction of current direction
                 elif action_index[1] == 1:
+                    # Snake wants to go South
                     if self.direction == "UP": action = self.direction
-                    else: action = "DOWN"
+                    else: action = "DOWN" # Eliminates the option to go the opposite direction of current direction
                 elif action_index[2] == 1:
+                    # Snake wants to go East
                     if self.direction == "LEFT": action = self.direction
-                    else: action = "RIGHT"
+                    else: action = "RIGHT" # Eliminates the option to go the opposite direction of current direction
                 elif action_index[3] == 1:
+                    # Snake wants to go West
                     if self.direction == "RIGHT": action = self.direction
-                    else: action = "LEFT"
+                    else: action = "LEFT" # Eliminates the option to go the opposite direction of current direction
             else:
+                # Available movements when snake is going North
                 if direction_local[0] == 1:
                     if action_index[0] == 1: action = "UP"
                     elif action_index[1] == 1: action = "LEFT" 
                     elif action_index[2] == 1: action = "RIGHT"
 
-
-            # Snake direction syd
+                # Available movements when snake is going South
                 elif direction_local[1] == 1:
                     if action_index[0] == 1: action = "DOWN"
                     elif action_index[1] == 1: action = "RIGHT" 
                     elif action_index[2] == 1: action = "LEFT"
 
-                # Snake direction øst
+                # Available movements when snake is going East
                 elif direction_local[2] == 1:
                     if action_index[0] == 1: action = "RIGHT"
                     elif action_index[1] == 1: action = "UP" 
                     elif action_index[2] == 1: action = "DOWN"		
 
-                # Snake direction VEST
+                # Available movements when snake is going West
                 else:
                     if action_index[0] == 1: action = "LEFT"
                     elif action_index[1] == 1: action = "DOWN" 
@@ -203,6 +225,7 @@ class Snake_Game():
 
             self.change_to = action
 
+        # Manual key gameplay options
         elif self.pygame is not None and not self.getting_moves:
             for event in self.pygame.event.get():		
                 if event.type == self.pygame.KEYDOWN:
@@ -239,6 +262,7 @@ class Snake_Game():
         self.snake_body.insert(0, list(self.snake_position))
         if self.should_render: self.render()
 
+    ## Counts number of steps before apple is reached by snake
     def get_time_for_apple(self):
         return self.stuck_step
 
@@ -274,6 +298,7 @@ class Snake_Game():
         if self.pygame is None:
             self.pygame = importlib.import_module('pygame')
             self.pygame.init()
+            # Defining colors
             self.black = self.pygame.Color(0, 0, 0)
             self.white = self.pygame.Color(255, 255, 255)
             self.red = self.pygame.Color(255, 0, 0)
@@ -281,7 +306,6 @@ class Snake_Game():
             self.blue = self.pygame.Color(0, 0, 255)
             self.pygame.display.set_caption('Slitherin Pythons')
             self.game_window = self.pygame.display.set_mode((self.window_x, self.window_y))
-            # defining colors
 
         # FPS (frames per second) controller
             self.fps = self.pygame.time.Clock()
@@ -292,27 +316,30 @@ class Snake_Game():
 							self.pygame.Rect(pos[0], pos[1], 10, 10))
         self.pygame.draw.rect(self.game_window, self.red, self.pygame.Rect(
 			self.fruit_position[0], self.fruit_position[1], 10, 10))
-        #   displaying score continuously
-		#self.show_score(1, env.white, 'times new roman', 20)
+        
+        # Displaying score continuously
+		# self.show_score(1, env.white, 'times new roman', 20)
 		# Refresh game screen
         # creating font object score_font
         score_font = self.pygame.font.SysFont('times new roman', 20)
         
-        # create the display surface object 
-        # score_surface
+        # Create the display surface object 
+        # Score_surface
         score_surface = score_font.render('Score : ' + str(self.score), True, self.white)
         
-        # create a rectangular object for the text
-        # surface object
+        # Create a rectangular object for the text
+        # Surface object
         score_rect = score_surface.get_rect()
         
-        # displaying text
+        # Displaying text
         self.game_window.blit(score_surface, score_rect)
         self.pygame.display.update()
-		# Frame Per Second /Refresh Rate
+		# Frames Per Second / Refresh Rate
         self.fps.tick(self.snake_speed)
 
+
     def is_game_over(self):
+        # Checks if snake collides with "walls" of the environment
         if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
             #run_data.append(log_data(has_won,env.score,env.time_steps,env.snake_position))
             self.reset()
@@ -324,14 +351,15 @@ class Snake_Game():
             self.game_count +=1
             self.reward = self.punish_death
             return True
-        # Tjekker om slangen sidder fast og slutter hvis den gør.
+        
+        # Checks if the Snake is stuck in a loop or takes too long to find the apple
         elif self.kill_stuck and self.is_stuck():
             self.reset()
             self.game_count +=1
             self.reward = self.punish_death
             return True
 
-        # Touching the snake body
+        # Collison with snake body
         for block in self.snake_body[1:]:
             if self.snake_position[0] == block[0] and self.snake_position[1] == block[1]:
                 self.reset()
@@ -344,21 +372,24 @@ class Snake_Game():
 
     def get_reward(self):
         return self.reward
+    
     def get_game_count(self):
         return self.game_count
+    
     def get_move(self):
         return self.direction
+    
     def write_data(self):
         return self.force_write_data if self.force_write_data else self.should_write_data
     
-        # Tjekker, om slangen sidder fast. Jo længere den er, jo længere tid har den til at finde 
-        # Et nyt æble. Hvis den sidder fast, afsluttes spillet oppe i is_game_over
+    # Tjekker, om slangen sidder fast. Jo længere den er, jo længere tid har den til at finde 
+    # Et nyt æble. Hvis den sidder fast, afsluttes spillet oppe i is_game_over
     def is_stuck(self):
         if self.stuck_step > len(self.snake_body)*100: return True
         else: return False
 
-        # Gør det samme som is_game_over, men ændrer ikke på spillet. Kan bruges til at finde ud af,
-        # om spillet er ovre uden at genstarte og resette værdier.
+    # Gør det samme som is_game_over, men ændrer ikke på spillet. Kan bruges til at finde ud af,
+    # om spillet er ovre uden at genstarte og resette værdier.
     def is_game_over_bool(self):
         if self.snake_position[0] < 0 or self.snake_position[0] > self.window_x-10:
             return True
@@ -372,7 +403,7 @@ class Snake_Game():
         return False
     
     def grid(self):
-        # Konvertere spillets koordinater til "rigtige koordinater"
+        # Konverterer spillets koordinater til "rigtige koordinater"
         x = self.window_x // 10
         y = self.window_y // 10
         body = np.array(self.snake_body) // 10
@@ -385,7 +416,7 @@ class Snake_Game():
         body[:, 0] = np.clip(body[:, 0], 0, x - 1)
         body[:, 1] = np.clip(body[:, 1], 0, y - 1)
         
-        # Ændre body og fruit placering i grid til 1
+        # Ændrer body og fruit placering i grid til 1
         grid[body[:, 1], body[:, 0]] = 1
         fruit = np.clip(fruit, 0, [x - 1, y - 1])  # Ensure fruit coordinates are within bounds
         grid[fruit[1], fruit[0]] = 5
@@ -399,44 +430,35 @@ class Snake_Game():
         grid = np.concatenate((grid,to_app_y), 1)
         grid = np.roll(grid, 1, 1)
         
-        # Konvertere grid til 2D array
+        # Konverterer grid til 2D array
         grid2D = grid.flatten()
         
         return grid2D
     
+
     def get_state_vector(self):
-        
         # Hoved koordinater
         head_x = self.snake_position[0] // 10
         head_y = self.snake_position[1] // 10
         head_cordinates = np.array((head_x, head_y))
-
         # Æble koordinater
         local_fruit_position = np.array(self.fruit_position) // 10
-
         # Distance mellem slangen og æble
         distance = np.linalg.norm(head_cordinates - local_fruit_position)
-
         # Retningsvektor
         local_direction = self.update_direction(self.direction)
-
-        # Boolean flag, om slange krop er mellem hovedet og æble
-        
-
         # Mulige movement space
         available_moves = np.array((1,1,1,1))
         if self.direction == "UP": available_moves[1] = 0
         elif self.direction == "DOWN": available_moves[0] = 0
         elif self.direction == "RIGHT": available_moves[3] = 0
         elif self.direction == "LEFT": available_moves[2] = 0
-    
         # Wall danger
         wall_danger = np.array((0,0,0,0))
         if self.snake_position[0] == 0: wall_danger[3] = 1
         if self.snake_position[0] == self.window_x - 10: wall_danger[2] = 1
         if self.snake_position[1] == 0: wall_danger[0] = 1
         if self.snake_position[1] == self.window_y - 10: wall_danger[1] = 1
-
         # Body danger
         body_danger = np.array((0,0,0,0))
         if [self.snake_position[0] + 10, self.snake_position[1]] in self.snake_body: body_danger[2] = 1
@@ -452,8 +474,6 @@ class Snake_Game():
         state_output = np.concatenate((head_cordinates, local_fruit_position, distance, local_direction, available_moves, wall_danger, body_danger), axis = None)
 
         return state_output
-
-
 
 
 
@@ -499,6 +519,8 @@ class Data():
                 else:
                     self.write_to_file(should_write, game)
 
+
+# Activating the Game
 if __name__ == "__main__":
     game = Snake_Game(window_x=200,window_y=200, snake_speed=15)
     n = 1
