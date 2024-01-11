@@ -519,6 +519,8 @@ class Data():
                 else:
                     self.write_to_file(should_write, game)
 
+
+# Activating the Game
 if __name__ == "__main__":
     game = Snake_Game(window_x=200,window_y=200, snake_speed=15)
     n = 1
