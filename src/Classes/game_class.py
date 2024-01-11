@@ -508,7 +508,6 @@ if __name__ == "__main__":
     print_grid = True
     while game.get_game_count() < n:
         s1 = game.get_state()
-        print(len(game.grid() ))
         game.get_state_vector()
         game.move()
         action = game.get_move()

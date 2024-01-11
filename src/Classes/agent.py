@@ -30,12 +30,15 @@ class Agent:
         self.reward_closer = reward_closer
         self.backstep = backstep
         # Assuming Linear_QNet and QTrainer are defined in the model
+        self.game = Snake_Game(snake_speed=5000, render=self.render, kill_stuck=True, window_x=self.window_x, window_y=self.window_y,
+                        apple_reward=self.apple_reward, step_punish=self.step_reward, death_punish=self.death_reward, state_rep=self.state_rep,
+                        reward_closer=self.reward_closer)
         if state_rep == "onestep":
             self.input, self.output = 11, 3
         elif state_rep == "vector":
             self.input, self.output = 21, 4
         elif state_rep == "grid":
-            self.input, self.output = 1024, 4
+            self.input, self.output = len(self.game.grid()), 4
         self.model = Linear_QNet(self.input, 256, self.output).to(self.device) 
         self.file_path = file_path
         if self.file_path is not None:
@@ -44,9 +47,6 @@ class Agent:
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.epsilon_decay = 0.99 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 #if self.is_training else 0  # Minimum value of epsilon
-        self.game = Snake_Game(snake_speed=5000, render=self.render, kill_stuck=True, window_x=self.window_x, window_y=self.window_y,
-                        apple_reward=self.apple_reward, step_punish=self.step_reward, death_punish=self.death_reward, state_rep=self.state_rep,
-                        reward_closer=self.reward_closer)
         self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
 
     def get_state(self, game):
@@ -165,7 +165,7 @@ class Agent:
                     self.reward_optim.clean_data(look_at=None)
                     model_metrics = self.reward_optim.calculate_metrics()
                     self.reward_optim.commit(0, 100, model_metrics, "NONE", 
-                                    "NONE", "NONE", "NONE")
+                                    "NONE", "NONE", "NONE", "NONE")
                     print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
                     self.reward_optim.push()
                     if self.is_training: self.reward_optim.clear_commits()
@@ -182,5 +182,5 @@ class Agent:
                 # plot(plot_scores, plot_mean_scores)
 
 if __name__ == '__main__':
-    agent = Agent(training=True, state_rep='vector')
+    agent = Agent(training=True, state_rep='onestep', backstep=True)
     agent.train()
