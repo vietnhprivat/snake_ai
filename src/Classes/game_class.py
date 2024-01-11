@@ -417,6 +417,7 @@ class Snake_Game():
         local_direction = self.update_direction(self.direction)
 
         # Boolean flag, om slange krop er mellem hovedet og æble
+        
 
         # Mulige movement space
         available_moves = np.array((1,1,1,1))
