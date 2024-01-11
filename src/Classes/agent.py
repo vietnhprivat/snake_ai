@@ -205,9 +205,7 @@ class Agent:
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
-                    if self.file_path is not None:
-                        self.model.save(self.file_path)
-                    else: self.model.save(index="11_states_negative")
+                    self.model.save(index="11_states_negative")
 
                 ## Hvis vi er på et multipel af 100 spil, giv noget grundlæggende information om hvordan, vi klarer os.
                 if game_number % 100 == 0:
@@ -226,7 +224,6 @@ class Agent:
                                     "NONE", "NONE", "NONE", "NONE")
                     print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
                     self.reward_optim.push()
-                    print(len(self.reward_optim.scores))
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
                     with open(plot_file_path, "wb") as f:
@@ -237,8 +234,8 @@ if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(render=True, training=True)
-    agent.train(250, plot_file_path=plot_file_path)
+    agent = Agent(training=False, file_path='DQL_models\model\model.pth')
+    agent.train(plot_file_path=plot_file_path)
     with open(plot_file_path, 'rb') as f:
         data = pickle.load(f)
         scores = data[0]
