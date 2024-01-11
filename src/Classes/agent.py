@@ -16,7 +16,7 @@ class Agent:
                  window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
         self.MAX_MEMORY = 1600 ## Længde af buffer
         self.BATCH_SIZE = 32 ## Sample størrelse
-        self.LR = 0.01 ## Learning rate
+        self.LR = 0.0001 ## Learning rate (TIDLIGERE 0.01 for onestep)
         if device is not None: ## Her kan man vælge at køre cpu selvom man har cuda
             self.device = device
         else:
@@ -58,7 +58,7 @@ class Agent:
 
         ## Vores epsilon behøver ikke at være så stor for onestep, da repræsentationen af staten er så simpel.
         ## Den skal være højere for vector og grid repræsentation
-        self.epsilon_decay = 0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.epsilon_decay = 0.999998  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
@@ -189,11 +189,11 @@ class Agent:
 
             ## Hvis vi er færdige: gem data for vores run til potentiel plotting
             if done:
-                if plot_file_path is not None:
+                game_number = self.game.get_game_count()
+                if plot_file_path is not None and game_number % 10 == 0:
                     scores_to_plot.append(curr_score)
                     scores_sum += curr_score
                     mean_score_to_plot.append(scores_sum/len(scores_to_plot))
-                game_number = self.game.get_game_count()
 
                 ## Tjek om vi har spillet de runs, vi gerne ville, hvis det er indstillet. Hvis vi har, gør klar til
                 ## at afslutte
@@ -205,9 +205,7 @@ class Agent:
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
-                    if self.file_path is not None:
-                        self.model.save(self.file_path)
-                    else: self.model.save(index="11_states_negative")
+                    self.model.save(index="11_states_negative")
 
                 ## Hvis vi er på et multipel af 100 spil, giv noget grundlæggende information om hvordan, vi klarer os.
                 if game_number % 100 == 0:
@@ -226,7 +224,6 @@ class Agent:
                                     "NONE", "NONE", "NONE", "NONE")
                     print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
                     self.reward_optim.push()
-                    print(len(self.reward_optim.scores))
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
                     with open(plot_file_path, "wb") as f:
@@ -237,8 +234,8 @@ if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(render=True, training=True)
-    agent.train(250, plot_file_path=plot_file_path)
+    agent = Agent(training=True)
+    agent.train(plot_file_path=plot_file_path)
     with open(plot_file_path, 'rb') as f:
         data = pickle.load(f)
         scores = data[0]
