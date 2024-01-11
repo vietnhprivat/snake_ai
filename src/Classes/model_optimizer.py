@@ -172,6 +172,19 @@ class ModelOptimizer():
                          f"SCORE: {model[1]} ", f"TIME: {model[2]}", f"Model number: {model[0]}"])
         return best
 
+    ## Removes duplicates from files
+    def remove_duplicates(path_for_data_input = "INSERT PATH HERE", path_for_data_output = "INSERT PATH HERE"):
+        with open(path_for_data_input, "r") as file_in:
+            data_in_file = file_in.readlines()
+            if data_in_file and not data_in_file[-1].endswith("\n"):
+                data_in_file[-1] += "\n"
+            remove_duplicates_from_data_in_file = set(data_in_file)
+        with open(path_for_data_output, "w") as file_out:
+            for items in remove_duplicates_from_data_in_file:
+                file_out.write(str(items))
+        print("Duplicates are removed from file")
+
+
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
     model_optimizer = ModelOptimizer(500,model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
