@@ -5,24 +5,27 @@ from collections import deque
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
 from model_dql import Linear_QNet, QTrainer
-from helper_dql import plot
 import torch.cuda
+from matplotlib import pyplot as plt
+import pickle
 
 
-
-MAX_MEMORY = 1600
-BATCH_SIZE = 32
-LR = 0.01
 
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
-                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
+        self.MAX_MEMORY = 1600
+        self.BATCH_SIZE = 32
+        self.LR = 0.01
+        if device is not None:
+            self.device = device
+        else:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1 if training else 0  # randomness
         self.gamma = 0.9  # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
+        self.memory = deque(maxlen=self.MAX_MEMORY)  # popleft()
         self.step_reward, self.apple_reward, self.death_reward = step_reward, apple_reward, death_reward
         self.window_x, self.window_y, self.render = window_x, window_y, render
         self.is_training = training
@@ -44,8 +47,8 @@ class Agent:
         if self.file_path is not None:
             self.model.load_state_dict(torch.load(self.file_path))
             self.model.eval()
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.99 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.trainer = QTrainer(self.model, lr=self.LR, gamma=self.gamma)
+        self.epsilon_decay = 0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 #if self.is_training else 0  # Minimum value of epsilon
         self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
 
@@ -56,8 +59,8 @@ class Agent:
         self.memory.append((state, action, reward, next_state, done))
 
     def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        if len(self.memory) > self.BATCH_SIZE:
+            mini_sample = random.sample(self.memory, self.BATCH_SIZE) # list of tuples
         else:
             mini_sample = self.memory
 
@@ -70,16 +73,25 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        # Update epsilon value
+        ## Opdatér epsilon værdi
         if self.is_training: self.epsilon = max(self.epsilon_min, self.epsilon_decay * self.epsilon)  # decay epsilon
-        
+
+        ## Liste med actions, er 3 eller 4 lang afhængig af om vi spiller fra slangens perspektiv eller ej.
         final_move = [0,0,0] if self.state_rep == "onestep" else [0,0,0,0]
+
+        ## Nogle gange vil vi tage en tilfældig action, især i starten. Gælder kun under træning.
         if random.random() < self.epsilon:
             move = random.randint(0, 2)  # Assuming 3 actions
             final_move[move] = 1
         else:
+
+            ## Laver state om til tensor og får en prediction fra modellen
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
+
+            ## Backstep vil algoritmisk give en meget lav q-værdi for at gå imod bevægelsesretningen.
+            ## Det er i game_class ikke muligt at gå baglæns, så dette er for at undgå at forlæns og baglæns
+            ## får samme q-værdi. Vi vil gerne have én entydig action fra modellen.
             if self.backstep == True and not self.state_rep == 'onestep':
                 available_moves = np.array((0,0,0,0))
                 if self.game.direction == "UP": available_moves[1] = 1
@@ -88,79 +100,109 @@ class Agent:
                 elif self.game.direction == "LEFT": available_moves[2] = 1
                 index = np.argmax(available_moves)
                 prediction[index] = -10000
+            
+            ## Vælger den action med den højeste Q-værdi-
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
         return final_move
 
-
-    def train(self):
+    ## Træningsfunktion. Kan tage rounds_to_play som input, så vil vi spille så mange spil.
+    ## Hvis den efterlades tom, kører den ind til vi afslutter (hvis rendering er aktiveret)
+    ## eller til at terminalen dræbes. Kan også tage en filsti til et sted hvor information gemmes
+    ## til plotting. Kan så senere hentes.
+    def train(self, rounds_to_play=False, plot_file_path=None):
+        ## Gør klar til at gemme data for runs til fil der kan plotte
+        if plot_file_path is not None:
+            scores_to_plot = []
+            mean_score_to_plot = []
+            scores_sum = 0
         high_score = -1
-        c = 0
-        step_counter = 0
+        ## Hvis kan rendere, kan det slås til og fra
         if self.game.toggle_possible: 
             import pygame
             pygame.init()
             self.game.toggle_rendering()
+        ## Flere variable
         game_toggle_score, game_toggle_runs, quitting = False, False, False
         toggle_epsilon, toggle_highscore = False, False
         while True:
-            step_counter += 1
+            ## Hvis det er muligt at rendere, går vi igennem knapper
             if self.game.toggle_possible:
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:  # Detect spacebar press
-                            self.game.toggle_rendering()  # Toggle rendering and speed
-                        elif event.key == pygame.K_s:
+                        if event.key == pygame.K_SPACE:  # Mellemrum, rendering tændt
+                            self.game.toggle_rendering() 
+                        elif event.key == pygame.K_s: # s, viser score for hvert run
                             game_toggle_score = not game_toggle_score
-                        elif event.key == pygame.K_r:
+                        elif event.key == pygame.K_r: # r, viser hvilket run, vi er på
                             game_toggle_runs = not game_toggle_runs
-                        elif event.key == pygame.K_q:
+                        elif event.key == pygame.K_q: # q, afslutter simulation
                             quitting = True
                             print("\nBAILING - force pushing metrics...\n")
                             game_toggle_runs,game_toggle_score =False,False
-                        elif event.key == pygame.K_UP:
+                        elif event.key == pygame.K_UP: # pil op, øger hastigheden ved rendering
                             self.game.snake_speed += 5
                         elif event.key == pygame.K_DOWN:
-                            self.game.snake_speed -=5
+                            self.game.snake_speed -=5 # pil ned, omvendte af ovenstående
                         elif event.key == pygame.K_e:
-                            toggle_epsilon = not toggle_epsilon
+                            toggle_epsilon = not toggle_epsilon # e, viser epsilon ved hvert run
                         elif event.key == pygame.K_h:
-                            toggle_highscore = not toggle_highscore
+                            toggle_highscore = not toggle_highscore # h, viser highscore kontinuerligt
 
-            # if agent.n_games == 2000:
-            #     game = Snake_Game(snake_speed=50, render=True, kill_stuck=True, window_x=300, window_y=300,
-            #               apple_reward=250, step_punish=-0.1, snake_length=4, death_punish=-75)
+            # Få state til at vælge en action og tag den action
             state_old = self.get_state(self.game)
             final_move = self.get_action(state_old)
             self.game.move(final_move)  # make a move
-            # game.has_apple()
-            time_taken, game_over = self.game.has_apple(), self.game.is_game_over_bool()
+
+            ## Gem hvor lang tid, der er gået siden sidste æble, få nuværende score og tjek om spillet er slut
+            ## Hvis spillet er slut, nulstilles variable og genstarter, hvis vi er på et æble, spawner et nyt
+            ## Se evt. dokumentation i game_class
+            time_taken = self.game.has_apple()
             curr_score = self.game.score
-            self.reward_optim.get_metrics(self.game.score, time_taken, game_over)
-
-
             done = self.game.is_game_over()
-            reward = self.game.get_reward()
-            state_new = self.get_state(self.game)
-            if self.is_training: self.train_short_memory(state_old, final_move, reward, state_new, done)
-            self.remember(state_old, final_move, reward, state_new, done)
-            game_number = self.game.get_game_count()
+
+            ## Gemmer score, tid, og om vi er døde til optimizeren, der senere kan lave statistik på det
+            self.reward_optim.get_metrics(curr_score, time_taken, done)
+
+            ## Tjek om vi træner eller bare bruger en tidligere model. Få reward, state, og så træn på det
+            if self.is_training: 
+                reward = self.game.get_reward()
+                state_new = self.get_state(self.game)
+                self.train_short_memory(state_old, final_move, reward, state_new, done)
+                self.remember(state_old, final_move, reward, state_new, done)
+
+            ## Hvis vi er færdige: gem data for vores run til potentiel plotting
             if done:
+                if plot_file_path is not None:
+                    scores_to_plot.append(curr_score)
+                    scores_sum += curr_score
+                    mean_score_to_plot.append(scores_sum/len(scores_to_plot))
+                game_number = self.game.get_game_count()
+
+                ## Tjek om vi har spillet de runs, vi gerne ville, hvis det er indstillet. Hvis vi har, gør klar til
+                ## at afslutte
+                if rounds_to_play: 
+                    if rounds_to_play == game_number: quitting = True
                 self.n_games += 1
+
+                ## Træn hvis vi træner, log potentiel highscore
                 if self.is_training: self.train_long_memory()
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
                     self.model.save(index="11_states_negative")
+
+                ## Hvis vi er på et multipel af 100 spil, giv noget grundlæggende information om hvordan, vi klarer os.
                 if game_number % 100 == 0:
-                    c += 100
-                    print(c, "GAMES")
+                    print(game_number, "GAMES")
                 if game_toggle_score or game_toggle_runs:
                     print(f"RUN: {game_number}"*game_toggle_runs,f"SCORE: {curr_score}"*game_toggle_score)
                 if toggle_highscore or toggle_epsilon:
                     print(f"HIGHSCORE: {high_score}"*toggle_highscore,f"EPSILON: {self.epsilon}"*toggle_epsilon)
 
+                ## Hvis vi er på et multipel af 250 eller har afsluttet, gemmer vi KI for data, gemmer plotting info
+                ## til plotting fil og breaker loopet
                 if game_number % 250 == 0 or quitting:
                     self.reward_optim.clean_data(look_at=None)
                     model_metrics = self.reward_optim.calculate_metrics()
@@ -168,19 +210,23 @@ class Agent:
                                     "NONE", "NONE", "NONE", "NONE")
                     print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
                     self.reward_optim.push()
+                    print(len(self.reward_optim.scores))
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
+                    with open(plot_file_path, "wb") as f:
+                        pickle.dump((scores_to_plot, mean_score_to_plot),f)
                     if quitting: break
 
-
-                # print('Game', agent.n_games, 'Score', score, 'Record:', record)
-
-                # plot_scores.append(curr_score)
-                # total_score += curr_score
-                # mean_score = total_score / agent.n_games
-                # plot_mean_scores.append(mean_score)
-                # plot(plot_scores, plot_mean_scores)
-
 if __name__ == '__main__':
-    agent = Agent(training=True, state_rep='onestep', backstep=True)
-    agent.train()
+    ## Fil til plotting information
+    plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
+    ## Initialisér agent
+    agent = Agent(render=True, training=True)
+    agent.train(250, plot_file_path=plot_file_path)
+    with open(plot_file_path, 'rb') as f:
+        data = pickle.load(f)
+        scores = data[0]
+        mean_scores = data[1]
+    plt.plot(scores)
+    plt.plot(mean_scores)
+    plt.show()
