@@ -76,8 +76,8 @@ class ModelOptimizer():
             # Fortæl, hvilken model, vi arbejder på, og træn den. ser lige nu på de sidste 250 runs.
             print(f"Training model {i}. Step reward: {step_reward}. Apple_reward: {apple_reward}.\n")
             model.train(runs, Optimizer=self.optimizer, look_at=runs_to_look_at, index=i+models_in_file)
-        # Når alle modeller er trænet, laver optimizeren en fil, hvor gns score, tid osv. for alle modeller gemmes
-        self.optimizer.push()
+            # Når alle modeller er trænet, laver optimizeren en fil, hvor gns score, tid osv. for alle modeller gemmes
+            self.optimizer.push()
 
 
         # Datahelper hjælper med at konvertere info fra datafil fra string til float
@@ -175,15 +175,15 @@ class ModelOptimizer():
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
     model_optimizer = ModelOptimizer(500,model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
-                                    metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
+                                      metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(1200,800)
+    model_optimizer.Train_Models(400,300)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
-    model_optimizer.sort_data("TIME") 
+    model_optimizer.sort_data("SCORE") 
 
     # Tager de top X bedste modeller indenfor den valgte parameter og viser dem.
     top_rewards = model_optimizer.get_rewards(10)  
