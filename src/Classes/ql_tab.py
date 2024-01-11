@@ -84,6 +84,7 @@ class Q_learning:
             model_metrics = Optimizer.calculate_metrics()
             Optimizer.commit(index, runs, model_metrics, self.file_path, 
                              self.game.punish_no_apple, self.game.reward_apple, self.game.punish_death, self.game.reward_closer)
+            Optimizer.push()
             
         # Når træning er slut, gemmes Q-tabellen i en pickle-fil med den tidligere angivne path
         with open(self.file_path, 'wb') as f:
