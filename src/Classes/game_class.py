@@ -165,13 +165,17 @@ class Snake_Game():
             if self.grid_mode or self.state_rep == 'vector':
                 if action_index[0] == 1:
                     #Model vil gå nord
-                    action = "UP"
+                    if self.direction == "DOWN": action = self.direction
+                    else: action = "UP"
                 elif action_index[1] == 1:
-                    action = "DOWN"
+                    if self.direction == "UP": action = self.direction
+                    else: action = "DOWN"
                 elif action_index[2] == 1:
-                    action = "RIGHT"
+                    if self.direction == "LEFT": action = self.direction
+                    else: action = "RIGHT"
                 elif action_index[3] == 1:
-                    action = "LEFT"
+                    if self.direction == "RIGHT": action = self.direction
+                    else: action = "LEFT"
             else:
                 if direction_local[0] == 1:
                     if action_index[0] == 1: action = "UP"
