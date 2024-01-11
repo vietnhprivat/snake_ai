@@ -10,29 +10,31 @@ from matplotlib import pyplot as plt
 import pickle
 
 
-
+## Agent tager filepath som input hvis man vil køre en model, der allerede er trænet.
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
                  window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
-        self.MAX_MEMORY = 1600
-        self.BATCH_SIZE = 32
-        self.LR = 0.01
-        if device is not None:
+        self.MAX_MEMORY = 1600 ## Længde af buffer
+        self.BATCH_SIZE = 32 ## Sample størrelse
+        self.LR = 0.01 ## Learning rate
+        if device is not None: ## Her kan man vælge at køre cpu selvom man har cuda
             self.device = device
         else:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print("Working on", self.device)
-        self.n_games = 0
-        self.epsilon = 1 if training else 0  # randomness
-        self.gamma = 0.9  # discount rate
-        self.memory = deque(maxlen=self.MAX_MEMORY)  # popleft()
+        print("Working on:", f"{self.device}".upper())
+        self.epsilon = 1 if training else 0  ## Tilfældighed
+        self.gamma = 0.9  ## Discount faktor
+        self.memory = deque(maxlen=self.MAX_MEMORY)  ## popleft() buffer
+
+        ## Definerer en masse variable baseret på __init__ input
         self.step_reward, self.apple_reward, self.death_reward = step_reward, apple_reward, death_reward
         self.window_x, self.window_y, self.render = window_x, window_y, render
         self.is_training = training
         self.state_rep = state_rep
         self.reward_closer = reward_closer
         self.backstep = backstep
-        # Assuming Linear_QNet and QTrainer are defined in the model
+
+        ## Initialisér et spil og model
         self.game = Snake_Game(snake_speed=5000, render=self.render, kill_stuck=True, window_x=self.window_x, window_y=self.window_y,
                         apple_reward=self.apple_reward, step_punish=self.step_reward, death_punish=self.death_reward, state_rep=self.state_rep,
                         reward_closer=self.reward_closer)
@@ -43,21 +45,34 @@ class Agent:
         elif state_rep == "grid":
             self.input, self.output = len(self.game.grid()), 4
         self.model = Linear_QNet(self.input, 256, self.output).to(self.device) 
+
         self.file_path = file_path
+
+        ## Hvis vi har en sti til en model, vil vi loade den i stedet for at træne en ny
         if self.file_path is not None:
             self.model.load_state_dict(torch.load(self.file_path))
             self.model.eval()
+
+        ## Initialisér trainer
         self.trainer = QTrainer(self.model, lr=self.LR, gamma=self.gamma)
+
+        ## Vores epsilon behøver ikke at være så stor for onestep, da repræsentationen af staten er så simpel.
+        ## Den skal være højere for vector og grid repræsentation
         self.epsilon_decay = 0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
-        self.epsilon_min = 0.01 #if self.is_training else 0  # Minimum value of epsilon
+        self.epsilon_min = 0.01 ## Minimumsværdi af epsilon
+
+        ## Initialisér en rewardoptimizer til at gemme metrics
         self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
 
+        ## Får state. se game_class
     def get_state(self, game):
         return game.get_state()
 
+        ## Gemmer state-actionpar til buffer
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
+        ## Træner long memory
     def train_long_memory(self):
         if len(self.memory) > self.BATCH_SIZE:
             mini_sample = random.sample(self.memory, self.BATCH_SIZE) # list of tuples
@@ -66,12 +81,12 @@ class Agent:
 
         states, actions, rewards, next_states, dones = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, dones)
-        #for state, action, reward, nexrt_state, done in mini_sample:
-        #    self.trainer.train_step(state, action, reward, next_state, done)
 
+        ## Træner short memory
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
+        ## Bestem en action
     def get_action(self, state):
         ## Opdatér epsilon værdi
         if self.is_training: self.epsilon = max(self.epsilon_min, self.epsilon_decay * self.epsilon)  # decay epsilon
@@ -101,7 +116,7 @@ class Agent:
                 index = np.argmax(available_moves)
                 prediction[index] = -10000
             
-            ## Vælger den action med den højeste Q-værdi-
+            ## Vælger den action med den højeste Q-værdi.
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
@@ -184,14 +199,15 @@ class Agent:
                 ## at afslutte
                 if rounds_to_play: 
                     if rounds_to_play == game_number: quitting = True
-                self.n_games += 1
 
                 ## Træn hvis vi træner, log potentiel highscore
                 if self.is_training: self.train_long_memory()
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
-                    self.model.save(index="11_states_negative")
+                    if self.file_path is not None:
+                        self.model.save(self.file_path)
+                    else: self.model.save(index="11_states_negative")
 
                 ## Hvis vi er på et multipel af 100 spil, giv noget grundlæggende information om hvordan, vi klarer os.
                 if game_number % 100 == 0:

@@ -18,7 +18,6 @@ class Linear_QNet(nn.Module):
         return x
 
     def save(self, file_name='model.pth', index=0):
-
         model_folder_path = './DQL_models/model' 
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
