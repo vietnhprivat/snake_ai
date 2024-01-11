@@ -1,7 +1,7 @@
 #!/bin/sh
 #BSUB -J qlearn_optim
 #BSUB -o qlearn_done%J.out
-#BSUB -e error_ql%J.err
+#BSUB -e qlearn_error_ql%J.err
 #BSUB -n 4
 #BSUB -q gpua10
 #BSUB -gpu "num=1:mode=exclusive_process"
