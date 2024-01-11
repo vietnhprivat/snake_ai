@@ -28,6 +28,8 @@ class RewardOptimizer():
         # runs, der skal tages i betragtning når vi udregner gns
     def clean_data(self,look_at=None):
         self.look_at = look_at if look_at is not None else len(self.scores)
+        if look_at is None:
+            look_at = 0
         self.scores = self.scores[look_at:]
         self.time_between_apples = self.time_between_apples[look_at:]
 
