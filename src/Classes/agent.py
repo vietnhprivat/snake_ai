@@ -16,7 +16,7 @@ LR = 0.01
 
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
-                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0):
+                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on", self.device)
         self.n_games = 0
@@ -28,6 +28,7 @@ class Agent:
         self.is_training = training
         self.state_rep = state_rep
         self.reward_closer = reward_closer
+        self.backstep = backstep
         # Assuming Linear_QNet and QTrainer are defined in the model
         if state_rep == "onestep":
             self.input, self.output = 11, 3
@@ -79,6 +80,14 @@ class Agent:
         else:
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
             prediction = self.model(state_tensor)
+            if self.backstep == True and not self.state_rep == 'onestep':
+                available_moves = np.array((0,0,0,0))
+                if self.game.direction == "UP": available_moves[1] = 1
+                elif self.game.direction == "DOWN": available_moves[0] = 1
+                elif self.game.direction == "RIGHT": available_moves[3] = 1
+                elif self.game.direction == "LEFT": available_moves[2] = 1
+                index = np.argmax(available_moves)
+                prediction[index] = -10000
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
