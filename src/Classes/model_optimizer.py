@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(10,8)
+    model_optimizer.Train_Models(1200,800)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
