@@ -5,24 +5,27 @@ from collections import deque
 from game_class import Snake_Game
 from reward_optimizer import RewardOptimizer
 from model_dql import Linear_QNet, QTrainer
-from helper_dql import plot
 import torch.cuda
+from matplotlib import pyplot as plt
+import pickle
 
 
-
-MAX_MEMORY = 1600
-BATCH_SIZE = 32
-LR = 0.01
 
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
-                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
+        self.MAX_MEMORY = 1600
+        self.BATCH_SIZE = 32
+        self.LR = 0.01
+        if device is not None:
+            self.device = device
+        else:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on", self.device)
         self.n_games = 0
         self.epsilon = 1 if training else 0  # randomness
         self.gamma = 0.9  # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
+        self.memory = deque(maxlen=self.MAX_MEMORY)  # popleft()
         self.step_reward, self.apple_reward, self.death_reward = step_reward, apple_reward, death_reward
         self.window_x, self.window_y, self.render = window_x, window_y, render
         self.is_training = training
@@ -44,8 +47,8 @@ class Agent:
         if self.file_path is not None:
             self.model.load_state_dict(torch.load(self.file_path))
             self.model.eval()
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon_decay = 0.99 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.trainer = QTrainer(self.model, lr=self.LR, gamma=self.gamma)
+        self.epsilon_decay = 0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 #if self.is_training else 0  # Minimum value of epsilon
         self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
 
@@ -56,8 +59,8 @@ class Agent:
         self.memory.append((state, action, reward, next_state, done))
 
     def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        if len(self.memory) > self.BATCH_SIZE:
+            mini_sample = random.sample(self.memory, self.BATCH_SIZE) # list of tuples
         else:
             mini_sample = self.memory
 
@@ -94,7 +97,10 @@ class Agent:
         return final_move
 
 
-    def train(self):
+    def train(self, rounds_to_play=False, plot_file_path=None):
+        if plot_file_path is not None:
+            scores_to_plot = []
+            mean_score_to_plot = []
         high_score = -1
         c = 0
         step_counter = 0
@@ -134,19 +140,22 @@ class Agent:
             state_old = self.get_state(self.game)
             final_move = self.get_action(state_old)
             self.game.move(final_move)  # make a move
-            # game.has_apple()
-            time_taken, game_over = self.game.has_apple(), self.game.is_game_over_bool()
+            time_taken = self.game.has_apple()
             curr_score = self.game.score
-            self.reward_optim.get_metrics(self.game.score, time_taken, game_over)
-
-
             done = self.game.is_game_over()
-            reward = self.game.get_reward()
-            state_new = self.get_state(self.game)
-            if self.is_training: self.train_short_memory(state_old, final_move, reward, state_new, done)
-            self.remember(state_old, final_move, reward, state_new, done)
-            game_number = self.game.get_game_count()
+            self.reward_optim.get_metrics(curr_score, time_taken, done)
+            if self.is_training: 
+                reward = self.game.get_reward()
+                state_new = self.get_state(self.game)
+                self.train_short_memory(state_old, final_move, reward, state_new, done)
+                self.remember(state_old, final_move, reward, state_new, done)
             if done:
+                if plot_file_path is not None:
+                    scores_to_plot.append(curr_score)
+                    mean_score_to_plot.append(sum(scores_to_plot)/len(scores_to_plot))
+                game_number = self.game.get_game_count()
+                if rounds_to_play: 
+                    if rounds_to_play == game_number: quitting = True
                 self.n_games += 1
                 if self.is_training: self.train_long_memory()
                 if curr_score > high_score:
@@ -168,8 +177,11 @@ class Agent:
                                     "NONE", "NONE", "NONE", "NONE")
                     print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
                     self.reward_optim.push()
+                    print(len(self.reward_optim.scores))
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
+                    with open(plot_file_path, "wb") as f:
+                        pickle.dump((scores_to_plot, mean_score_to_plot),f)
                     if quitting: break
 
 
@@ -182,5 +194,13 @@ class Agent:
                 # plot(plot_scores, plot_mean_scores)
 
 if __name__ == '__main__':
-    agent = Agent(training=True, state_rep='onestep', backstep=True)
-    agent.train()
+    plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
+    agent = Agent(render=True, training=True)
+    agent.train(250, plot_file_path=plot_file_path)
+    with open(plot_file_path, 'rb') as f:
+        data = pickle.load(f)
+        scores = data[0]
+        mean_scores = data[1]
+    plt.plot(scores)
+    plt.plot(mean_scores)
+    plt.show()
