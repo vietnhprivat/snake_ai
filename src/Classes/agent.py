@@ -44,7 +44,7 @@ class Agent:
             self.input, self.output = 21, 4
         elif state_rep == "grid":
             self.input, self.output = len(self.game.grid()), 4
-        self.model = Linear_QNet(self.input, 256, self.output).to(self.device) 
+        self.model = Linear_QNet(self.input, 256, self.output, self.device).to(self.device) 
 
         self.file_path = file_path
 

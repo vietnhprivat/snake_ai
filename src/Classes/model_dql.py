@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, device='cpu'):
         super().__init__()
-        self.device = 'cpu'#torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.linear1 = nn.Linear(input_size, hidden_size).to(self.device)
         self.linear2 = nn.Linear(hidden_size, output_size).to(self.device)
 
