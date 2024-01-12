@@ -173,7 +173,7 @@ class ModelOptimizer():
         return best
 
     ## Removes duplicates from files
-    def remove_duplicates(path_for_data_input = "INSERT PATH HERE", path_for_data_output = "INSERT PATH HERE"):
+    def remove_duplicates(self, path_for_data_input = "INSERT PATH HERE", path_for_data_output = "INSERT PATH HERE"):
         with open(path_for_data_input, "r") as file_in:
             data_in_file = file_in.readlines()
             if data_in_file and not data_in_file[-1].endswith("\n"):
