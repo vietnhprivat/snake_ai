@@ -50,7 +50,7 @@ class Agent:
 
         ## Hvis vi har en sti til en model, vil vi loade den i stedet for at træne en ny
         if self.file_path is not None:
-            self.model.load_state_dict(torch.load(self.file_path))
+            self.model.load_state_dict(torch.load(self.file_path, map_location=self.device))
             self.model.eval()
 
         ## Initialisér trainer
