@@ -429,7 +429,7 @@ class Snake_Game():
         to_app_y = np.full((y+2,2), -1)
         grid = np.concatenate((grid,to_app_y), 1)
         grid = np.roll(grid, 1, 1)
-        
+        if self.grid_mode: return grid
         # Konverterer grid til 2D array
         grid2D = grid.flatten()
         
