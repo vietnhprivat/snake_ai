@@ -234,7 +234,7 @@ if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(training=True)
+    agent = Agent(training=False, file_path='DQL_models\model\\vector_model.pth', state_rep='vector', device='cpu')
     agent.train(plot_file_path=plot_file_path)
     with open(plot_file_path, 'rb') as f:
         data = pickle.load(f)
