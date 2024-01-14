@@ -16,7 +16,7 @@ class Agent:
                  window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
         self.MAX_MEMORY = 1600 ## Længde af buffer
         self.BATCH_SIZE = 32 ## Sample størrelse
-        self.LR = 0.0001 ## Learning rate (TIDLIGERE 0.01 for onestep)
+        self.LR = 0.01 ## Learning rate (TIDLIGERE 0.01 for onestep)
         if device is not None: ## Her kan man vælge at køre cpu selvom man har cuda
             self.device = device
         else:
@@ -44,7 +44,8 @@ class Agent:
             self.input, self.output = 21, 4
         elif state_rep == "grid":
             self.input, self.output = len(self.game.grid()), 4
-        self.model = Linear_QNet(self.input, 256, self.output, self.device).to(self.device) 
+        self.model = Linear_QNet(self.input, 256, self.output, self.device, 
+                                 grid_mode=True if self.state_rep =='grid' else False).to(self.device) 
 
         self.file_path = file_path
 
@@ -58,7 +59,7 @@ class Agent:
 
         ## Vores epsilon behøver ikke at være så stor for onestep, da repræsentationen af staten er så simpel.
         ## Den skal være højere for vector og grid repræsentation
-        self.epsilon_decay = 0.999998  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.epsilon_decay = 0.9995  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
@@ -96,14 +97,14 @@ class Agent:
 
         ## Nogle gange vil vi tage en tilfældig action, især i starten. Gælder kun under træning.
         if random.random() < self.epsilon:
-            move = random.randint(0, 2)  # Assuming 3 actions
+            move = random.randint(0, len(final_move)-1)  # Depending on action space
             final_move[move] = 1
         else:
 
             ## Laver state om til tensor og får en prediction fra modellen
             state_tensor = torch.tensor(state, dtype=torch.float).to(self.device).clone().detach()
+            if self.state_rep == 'grid': state_tensor = state_tensor.unsqueeze(0).unsqueeze(0)
             prediction = self.model(state_tensor)
-
             ## Backstep vil algoritmisk give en meget lav q-værdi for at gå imod bevægelsesretningen.
             ## Det er i game_class ikke muligt at gå baglæns, så dette er for at undgå at forlæns og baglæns
             ## får samme q-værdi. Vi vil gerne have én entydig action fra modellen.
@@ -199,7 +200,6 @@ class Agent:
                 ## at afslutte
                 if rounds_to_play: 
                     if rounds_to_play == game_number: quitting = True
-
                 ## Træn hvis vi træner, log potentiel highscore
                 if self.is_training: self.train_long_memory()
                 if curr_score > high_score:
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(training=False, file_path='DQL_models\model\\vector_model.pth', state_rep='vector', device='cpu')
+    agent = Agent(state_rep='grid', device='cpu')
     agent.train(plot_file_path=plot_file_path)
     with open(plot_file_path, 'rb') as f:
         data = pickle.load(f)
