@@ -1,6 +1,7 @@
 from collections import namedtuple
 import numpy as np
-
+import pandas as pd
+import pickle
 #### Dette er RewardOptimizeren. Den bruges til at holde styr på hvordan modellerne klarer sig.
 # undervejs i et run vil den holde styr på gennemsnitsscore og tid. Når modellen/modellerne er trænede,
 # kan den gemme data for modellerne i en fil med det angivne filnavn.
@@ -20,8 +21,10 @@ class RewardOptimizer():
                                   ('index','mean_score','mean_time_apple', 'runs', 'file_path', 
                                    'step_punish', 'apple_reward', 'death_punish', 'closer_reward'))
         
+        columns = ['index', 'mean_score', 'mean_time_apple', 'runs', 'file_path', 'step_punish', 'apple_reward', 'death_punish', 'closer_reward']
+        
         #Stack er en liste over alle modellers metrics
-        self.stack = []
+        self.stack = pd.DataFrame(columns=columns)
         self.look_at = None
 
         # Clean data kaldes inden metrics udregnes. Den udvælger hvor mange, af de sidste
@@ -64,15 +67,39 @@ class RewardOptimizer():
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
         # Sender også data om spil/model som fx de rewards, der blev brugt
     def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish, closer_reward):
-        to_append = self.metrics(index, calculated_metrics[0], calculated_metrics[1], runs, file_path, 
-                                 step_punish, apple_reward, death_punish, closer_reward)
-        self.stack.append(to_append)
+        # to_append = self.metrics(index, calculated_metrics[0], calculated_metrics[1], runs, file_path, 
+        #                          step_punish, apple_reward, death_punish, closer_reward)
+        
+        new_row_data = {
+            'index': index,
+            'mean_score': calculated_metrics[0],
+            'mean_time_apple': calculated_metrics[1],
+            'runs': runs,
+            'file_path': file_path,
+            'step_punish': step_punish,
+            'apple_reward': apple_reward,
+            'death_punish': death_punish,
+            'closer_reward': closer_reward
+        }
+
+        self.stack = pd.concat([self.stack, pd.DataFrame([new_row_data])], ignore_index=True)
+
+
+
+        # self.stack.append(new_row_data)
+
+        print(self.stack)
 
     def clear_commits(self):
         self.stack = []
 
-        #Push sender stacken til en fil
+    #     #Push sender stacken til en fil
+    # def push(self):
+    #     with open(self.file_path, "a") as f:
+    #         for model in self.stack:
+    #             f.write(f"{model}\n")
+
+        # Push sender stacken til en pickle-fil
     def push(self):
-        with open(self.file_path, "a") as f:
-            for model in self.stack:
-                f.write(f"{model}\n")
+        with open(self.file_path, "wb") as f:
+            pickle.dump(self.stack, f)
