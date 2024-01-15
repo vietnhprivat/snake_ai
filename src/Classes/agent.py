@@ -245,7 +245,7 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
+    plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.pkl'
     ## Initialisér agent
     agent = Agent(state_rep='onestep', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.9999985,
                   learning_rate=0.0001)
