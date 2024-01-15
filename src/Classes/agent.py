@@ -13,18 +13,20 @@ import pickle
 ## Agent tager filepath som input hvis man vil køre en model, der allerede er trænet.
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
-                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, device=None):
+                 window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, 
+                 device=None, epsilon_decay=0.99999, learning_rate=0.01, model_name='testing', epsilon_min=0.01, gamma=0.9):
         self.MAX_MEMORY = 1600 ## Længde af buffer
         self.BATCH_SIZE = 32 ## Sample størrelse
-        self.LR = 0.01 ## Learning rate (TIDLIGERE 0.01 for onestep)
+        self.LR = learning_rate ## Learning rate (TIDLIGERE 0.01 for onestep)
         if device is not None: ## Her kan man vælge at køre cpu selvom man har cuda
             self.device = device
         else:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("Working on:", f"{self.device}".upper())
         self.epsilon = 1 if training else 0  ## Tilfældighed
-        self.gamma = 0.9  ## Discount faktor
+        self.gamma = gamma  ## Discount faktor
         self.memory = deque(maxlen=self.MAX_MEMORY)  ## popleft() buffer
+        self.model_name = model_name
 
         ## Definerer en masse variable baseret på __init__ input
         self.step_reward, self.apple_reward, self.death_reward = step_reward, apple_reward, death_reward
@@ -59,8 +61,8 @@ class Agent:
 
         ## Vores epsilon behøver ikke at være så stor for onestep, da repræsentationen af staten er så simpel.
         ## Den skal være højere for vector og grid repræsentation
-        self.epsilon_decay = 0.99995  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
-        self.epsilon_min = 0.01 ## Minimumsværdi af epsilon
+        self.epsilon_decay = epsilon_decay  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
         self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
@@ -131,8 +133,7 @@ class Agent:
         ## Gør klar til at gemme data for runs til fil der kan plotte
         if plot_file_path is not None:
             scores_to_plot = []
-            mean_score_to_plot = []
-            scores_sum = 0
+            step_per_game_list = []
         high_score = -1
         ## Hvis kan rendere, kan det slås til og fra
         if self.game.toggle_possible: 
@@ -142,6 +143,7 @@ class Agent:
         ## Flere variable
         game_toggle_score, game_toggle_runs, quitting = False, False, False
         toggle_epsilon, toggle_highscore = False, False
+        step_per_game = 0
         while True:
             ## Hvis det er muligt at rendere, går vi igennem knapper
             if self.game.toggle_possible:
@@ -169,6 +171,7 @@ class Agent:
             # Få state til at vælge en action og tag den action
             state_old = self.get_state(self.game)
             final_move = self.get_action(state_old)
+            step_per_game += 1
             self.game.move(final_move)  # make a move
 
             ## Gem hvor lang tid, der er gået siden sidste æble, få nuværende score og tjek om spillet er slut
@@ -191,21 +194,21 @@ class Agent:
             ## Hvis vi er færdige: gem data for vores run til potentiel plotting
             if done:
                 game_number = self.game.get_game_count()
-                if plot_file_path is not None and game_number % 10 == 0:
+                if self.is_training: self.train_long_memory()
+                if curr_score > high_score:
+                    high_score = curr_score
+                    print("Highscore!", high_score)
+                    self.model.save(index=self.model_name)
+                if plot_file_path is not None:
                     scores_to_plot.append(curr_score)
-                    scores_sum += curr_score
-                    mean_score_to_plot.append(scores_sum/len(scores_to_plot))
+                    step_per_game_list.append(step_per_game)
+                    step_per_game = 0
 
                 ## Tjek om vi har spillet de runs, vi gerne ville, hvis det er indstillet. Hvis vi har, gør klar til
                 ## at afslutte
                 if rounds_to_play: 
                     if rounds_to_play == game_number: quitting = True
                 ## Træn hvis vi træner, log potentiel highscore
-                if self.is_training: self.train_long_memory()
-                if curr_score > high_score:
-                    high_score = curr_score
-                    print("Highscore!", high_score)
-                    self.model.save(index="11_states_negative")
 
                 ## Hvis vi er på et multipel af 100 spil, giv noget grundlæggende information om hvordan, vi klarer os.
                 if game_number % 100 == 0:
@@ -228,19 +231,12 @@ class Agent:
                     print("METRICS PUSHED")
                     if plot_file_path is not None:
                         with open(plot_file_path, "wb") as f:
-                            pickle.dump((scores_to_plot, mean_score_to_plot),f)
+                            pickle.dump((scores_to_plot),f)
                     if quitting: break
 
 if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(state_rep='vector', apple_reward=70,step_reward=10,death_reward=-120, render=True)
+    agent = Agent(state_rep='vector', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.99995)
     agent.train(plot_file_path=plot_file_path)
-    with open(plot_file_path, 'rb') as f:
-        data = pickle.load(f)
-        scores = data[0]
-        mean_scores = data[1]
-    plt.plot(scores)
-    plt.plot(mean_scores)
-    plt.show()
