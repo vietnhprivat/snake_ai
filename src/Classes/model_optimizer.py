@@ -188,12 +188,12 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(1) #model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
+    model_optimizer = ModelOptimizer(10) #model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
                                       #metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(200,100)
+    model_optimizer.Train_Models(600,400)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter

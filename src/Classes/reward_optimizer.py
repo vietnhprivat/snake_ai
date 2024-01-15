@@ -67,10 +67,7 @@ class RewardOptimizer():
 
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
         # Sender også data om spil/model som fx de rewards, der blev brugt
-    def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish, closer_reward):
-        # to_append = self.metrics(index, calculated_metrics[0], calculated_metrics[1], runs, file_path, 
-        #                          step_punish, apple_reward, death_punish, closer_reward)
-        
+    def commit(self, index, runs, calculated_metrics, file_path, step_punish, apple_reward, death_punish, closer_reward):        
         new_row_data = {
             'index': index,
             'mean_score': calculated_metrics[0],
@@ -87,25 +84,17 @@ class RewardOptimizer():
 
         self.stack = pd.concat([self.stack, pd.DataFrame([new_row_data])], ignore_index=True)
 
-
-
-        # self.stack.append(new_row_data)
-
-        print(self.stack)
-
     def clear_commits(self):
         self.stack = pd.DataFrame(columns=self.columns)
 
-    #     #Push sender stacken til en fil
-    # def push(self):
-    #     with open(self.file_path, "a") as f:
-    #         for model in self.stack:
-    #             f.write(f"{model}\n")
-
         # Push sender stacken til en pickle-fil
     def push(self):
-        with open(self.file_path, "rb") as f:
-            data = pickle.load(f)
-        data = pd.concat([data, self.stack], ignore_index=True)
-        with open(self.file_path, "wb") as f:
-            pickle.dump(data, f)
+        try:
+            with open(self.file_path, "rb") as f:
+                data = pickle.load(f)
+            data = pd.concat([data, self.stack], ignore_index=True)
+            with open(self.file_path, "wb") as f:
+                pickle.dump(data, f)
+        except: 
+            with open(self.file_path, "wb") as f:
+                pickle.dump(self.stack, f)
