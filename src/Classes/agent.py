@@ -14,7 +14,7 @@ import pickle
 class Agent:
     def __init__(self, file_path=None, step_reward=-7, apple_reward=90, death_reward=-120, 
                  window_x=200, window_y=200, render=True, training=True, state_rep="onestep", reward_closer=0, backstep=False, 
-                 device=None, epsilon_decay=0.99999, learning_rate=0.01, model_name='testing', epsilon_min=0.01, gamma=0.9):
+                 device=None, epsilon_decay=0.99999, learning_rate=0.001, model_name='testing', epsilon_min=0.01, gamma=0.9):
         self.MAX_MEMORY = 1600 ## Længde af buffer
         self.BATCH_SIZE = 32 ## Sample størrelse
         self.LR = learning_rate ## Learning rate (TIDLIGERE 0.01 for onestep)
@@ -134,6 +134,7 @@ class Agent:
         if plot_file_path is not None:
             scores_to_plot = []
             step_per_game_list = []
+            epsilon_list = []
         high_score = -1
         ## Hvis kan rendere, kan det slås til og fra
         if self.game.toggle_possible: 
@@ -203,6 +204,7 @@ class Agent:
                     scores_to_plot.append(curr_score)
                     step_per_game_list.append(step_per_game)
                     step_per_game = 0
+                    epsilon_list.append(self.epsilon)
 
                 ## Tjek om vi har spillet de runs, vi gerne ville, hvis det er indstillet. Hvis vi har, gør klar til
                 ## at afslutte
@@ -238,5 +240,5 @@ if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(state_rep='vector', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.99995)
+    agent = Agent(state_rep='vector', training=False, apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.9999955, file_path='DQL_models\\model\\testing_model.pth')
     agent.train(plot_file_path=plot_file_path)
