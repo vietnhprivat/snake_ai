@@ -59,7 +59,7 @@ class Agent:
 
         ## Vores epsilon behøver ikke at være så stor for onestep, da repræsentationen af staten er så simpel.
         ## Den skal være højere for vector og grid repræsentation
-        self.epsilon_decay = 0.9995  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
+        self.epsilon_decay = 0.99995  #0.9995 if state_rep=='onestep' else 0.999998  # Decaying rate per game
         self.epsilon_min = 0.01 ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
@@ -226,15 +226,16 @@ class Agent:
                     self.reward_optim.push()
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
-                    with open(plot_file_path, "wb") as f:
-                        pickle.dump((scores_to_plot, mean_score_to_plot),f)
+                    if plot_file_path is not None:
+                        with open(plot_file_path, "wb") as f:
+                            pickle.dump((scores_to_plot, mean_score_to_plot),f)
                     if quitting: break
 
 if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(state_rep='grid', device='cpu')
+    agent = Agent(state_rep='vector', apple_reward=70,step_reward=10,death_reward=-120, render=True)
     agent.train(plot_file_path=plot_file_path)
     with open(plot_file_path, 'rb') as f:
         data = pickle.load(f)
