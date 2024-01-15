@@ -3,6 +3,8 @@ from reward_optimizer import RewardOptimizer
 from ql_tab import Q_learning
 import random
 from collections import namedtuple
+import pickle
+import pandas as pd
 
 #### Denne fil træner adskillige modeller og benytter sig af RewardOptimizeren til at skrive data.
 # ModelOptimizeren kan desuden behandle data fra filerne.
@@ -78,6 +80,7 @@ class ModelOptimizer():
             model.train(runs, Optimizer=self.optimizer, look_at=runs_to_look_at, index=i+models_in_file)
             # Når alle modeller er trænet, laver optimizeren en fil, hvor gns score, tid osv. for alle modeller gemmes
             self.optimizer.push()
+            self.optimizer.clear_commits()
 
 
         # Datahelper hjælper med at konvertere info fra datafil fra string til float
@@ -115,6 +118,9 @@ class ModelOptimizer():
 
 
     def get_data(self):
+        with open(self.metric_folder_path, "rb") as f:
+            data = pickle.load(f)
+            return data
         with open(self.metric_folder_path, "r") as f:
             data_raw = f.read().splitlines()
         data = []
@@ -150,10 +156,12 @@ class ModelOptimizer():
     
     def sort_data(self, index_to_sort_by):
         # Tager string med SCORE eller TIME som input, og sorterer derefter
-        if index_to_sort_by == "SCORE": index = 1
-        elif index_to_sort_by == "TIME": index = 2
+        if index_to_sort_by == "SCORE": index = 'mean_score_mid'
+        elif index_to_sort_by == "TIME": index = 'mean_apple_mid'
     
         self.sorted_data = self.get_data()
+        self.sorted_data = self.sorted_data.sort_values(by=index, ascending=index=='mean_apple_mid')
+        return self.sorted_data
 
         # Sorterer ud fra valgt sorteringsmetode.
         # Reverse sort er True hvis index er 1, altså hvis vi kigger på score. Hvis vi kigger på tid, er den false,
@@ -163,14 +171,7 @@ class ModelOptimizer():
     
     def get_rewards(self, top_how_many=10):
         # Sørger for at man ikke kan vælge flere end der er
-        top = top_how_many if not top_how_many > len(self.sorted_data) else len(self.sorted_data)
-        best = []
-
-        # Laver en named tuple med de rewards, der er blevet brugt
-        for model in self.sorted_data[:top+1]:
-            best.append([f"STEP Reward: {model[5]}", f"APPLE Reward: {model[6]}", f"DEATH Reward: {model[7]}", 
-                         f"SCORE: {model[1]} ", f"TIME: {model[2]}", f"Model number: {model[0]}"])
-        return best
+        return self.sorted_data.head(top_how_many)
 
     ## Removes duplicates from files
     def remove_duplicates(self, path_for_data_input = "INSERT PATH HERE", path_for_data_output = "INSERT PATH HERE"):
@@ -187,18 +188,18 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(10) #model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
+    model_optimizer = ModelOptimizer(1) #model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
                                       #metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(400,300)
+    model_optimizer.Train_Models(200,100)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
-    model_optimizer.sort_data("SCORE") 
+    sort_by = "SCORE"
+    model_optimizer.sort_data(sort_by) 
 
     # Tager de top X bedste modeller indenfor den valgte parameter og viser dem.
     top_rewards = model_optimizer.get_rewards(10)  
-    for rewards in top_rewards:
-        print(rewards)
+    print(f"\nSorted by {sort_by.lower()}:\n",top_rewards[['step_punish', 'apple_reward','death_punish','closer_reward']])

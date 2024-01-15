@@ -21,10 +21,11 @@ class RewardOptimizer():
                                   ('index','mean_score','mean_time_apple', 'runs', 'file_path', 
                                    'step_punish', 'apple_reward', 'death_punish', 'closer_reward'))
         
-        columns = ['index', 'mean_score', 'mean_time_apple', 'runs', 'file_path', 'step_punish', 'apple_reward', 'death_punish', 'closer_reward']
+        self.columns = ['index', 'mean_score', 'mean_time_apple', 'runs', 'file_path', 'step_punish', 
+                        'apple_reward', 'death_punish', 'closer_reward', 'mean_score_mid', 'mean_apple_mid']
         
         #Stack er en liste over alle modellers metrics
-        self.stack = pd.DataFrame(columns=columns)
+        self.stack = pd.DataFrame(columns=self.columns)
         self.look_at = None
 
         # Clean data kaldes inden metrics udregnes. Den udvælger hvor mange, af de sidste
@@ -61,7 +62,7 @@ class RewardOptimizer():
         if self.look_at is not None:
             KI_score = [mean_score - 1.96* np.sqrt(score_var)/np.sqrt(self.look_at), mean_score + 1.96* np.sqrt(score_var)/np.sqrt(self.look_at)]
             KI_apple = [mean_time_apple - 1.96* np.sqrt(apple_var)/np.sqrt(self.look_at), mean_time_apple + 1.96* np.sqrt(apple_var)/np.sqrt(self.look_at)]
-            return KI_score, KI_apple
+            return KI_score, KI_apple, mean_score, mean_time_apple
         return mean_score, mean_time_apple
 
         # Tilføjer modellens udregnede metrics til en stack, der senere skubbes til filen.
@@ -79,7 +80,9 @@ class RewardOptimizer():
             'step_punish': step_punish,
             'apple_reward': apple_reward,
             'death_punish': death_punish,
-            'closer_reward': closer_reward
+            'closer_reward': closer_reward,
+            'mean_score_mid' : calculated_metrics[2],
+            'mean_apple_mid' : calculated_metrics[3]
         }
 
         self.stack = pd.concat([self.stack, pd.DataFrame([new_row_data])], ignore_index=True)
@@ -91,7 +94,7 @@ class RewardOptimizer():
         print(self.stack)
 
     def clear_commits(self):
-        self.stack = []
+        self.stack = pd.DataFrame(columns=self.columns)
 
     #     #Push sender stacken til en fil
     # def push(self):
@@ -101,5 +104,8 @@ class RewardOptimizer():
 
         # Push sender stacken til en pickle-fil
     def push(self):
+        with open(self.file_path, "rb") as f:
+            data = pickle.load(f)
+        data = pd.concat([data, self.stack], ignore_index=True)
         with open(self.file_path, "wb") as f:
-            pickle.dump(self.stack, f)
+            pickle.dump(data, f)
