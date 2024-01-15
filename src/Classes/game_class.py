@@ -87,7 +87,8 @@ class Snake_Game():
         self.direction = self.direction_space[random.randint(0,3)]
         self.change_to = self.direction
         ## Defines snake's head position
-        self.snake_position = [random.randrange(self.snake_length*2, (self.window_x//10)-self.snake_length*2) * 10, random.randrange(self.snake_length*2, (self.window_y//10)-self.snake_length*2) * 10]
+        self.snake_position = [random.randrange(self.snake_length*2, (self.window_x//10)-self.snake_length*2) * 10, 
+                               random.randrange(self.snake_length*2, (self.window_y//10)-self.snake_length*2) * 10]
 
         ## Defines snake's body position
         if self.direction == "RIGHT":
