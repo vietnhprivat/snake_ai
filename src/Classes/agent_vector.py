@@ -250,6 +250,6 @@ if __name__ == '__main__':
     # plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.pkl'
     plot_file_path = '/zhome/db/e/206305/snake_ai/src/Classes/DQL_PLOT/TEST_PLOTS/plot_file_vector_15_01.pkl'
     ## Initialisér agent
-    agent = Agent(state_rep='vector', apple_reward=35,step_reward=-7,death_reward=-120, reward_closer=0, render=False, epsilon_decay=0.9999985,
+    agent = Agent(state_rep='vector', apple_reward=68, step_reward=8, death_reward=-112, reward_closer=2, render=False, epsilon_decay=0.9999985,
                   learning_rate=0.0001, model_name="vector_15_01")
     agent.train(plot_file_path=plot_file_path)
