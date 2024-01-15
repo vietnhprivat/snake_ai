@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer('src\Classes\optim_of_tab_q-learn\metric_files\DQN_metric_test.txt')
+        self.reward_optim = RewardOptimizer(f'src\Classes\optim_of_tab_q-learn\metric_files\DQN_{state_rep}_metrics.pkl')
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -134,6 +134,7 @@ class Agent:
         if plot_file_path is not None:
             scores_to_plot = []
             step_per_game_list = []
+            epsilon_list = []
         high_score = -1
         ## Hvis kan rendere, kan det slås til og fra
         if self.game.toggle_possible: 
@@ -144,7 +145,11 @@ class Agent:
         game_toggle_score, game_toggle_runs, quitting = False, False, False
         toggle_epsilon, toggle_highscore = False, False
         step_per_game = 0
+        total_steps = 0
+        steps_max = 5_000_000
+        steps_max = 1000
         while True:
+            total_steps +=1
             ## Hvis det er muligt at rendere, går vi igennem knapper
             if self.game.toggle_possible:
                 for event in pygame.event.get():
@@ -203,6 +208,7 @@ class Agent:
                     scores_to_plot.append(curr_score)
                     step_per_game_list.append(step_per_game)
                     step_per_game = 0
+                    epsilon_list.append(self.epsilon)
 
                 ## Tjek om vi har spillet de runs, vi gerne ville, hvis det er indstillet. Hvis vi har, gør klar til
                 ## at afslutte
@@ -223,9 +229,8 @@ class Agent:
                 if game_number % 250 == 0 or quitting:
                     self.reward_optim.clean_data(look_at=None)
                     model_metrics = self.reward_optim.calculate_metrics()
-                    self.reward_optim.commit(0, 100, model_metrics, "NONE", 
-                                    "NONE", "NONE", "NONE", "NONE")
-                    print(f"METRICS - Score: {model_metrics[0]} Time Between Apples: {model_metrics[1]}\n")
+                    self.reward_optim.commit(game_number/250, game_number, model_metrics, self.file_path, 
+                             self.game.punish_no_apple, self.game.reward_apple, self.game.punish_death, self.game.reward_closer)
                     self.reward_optim.push()
                     if self.is_training: self.reward_optim.clear_commits()
                     print("METRICS PUSHED")
@@ -233,10 +238,15 @@ class Agent:
                         with open(plot_file_path, "wb") as f:
                             pickle.dump((scores_to_plot),f)
                     if quitting: break
+            
+            if total_steps == steps_max: 
+                quitting = True
+                print("Steps hit, quitting")
 
 if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.txt'
     ## Initialisér agent
-    agent = Agent(state_rep='vector', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.99995)
+    agent = Agent(state_rep='onestep', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.9999985,
+                  learning_rate=0.0001)
     agent.train(plot_file_path=plot_file_path)
