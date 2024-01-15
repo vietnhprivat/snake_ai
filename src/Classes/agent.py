@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer(f'src\Classes\optim_of_tab_q-learn\metric_files\DQN_{state_rep}_metrics.pkl')
+        self.reward_optim = RewardOptimizer(f'src\Classes\optim_of_tab_q-learn\metric_files\DQN_{state_rep}_metrics.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -236,7 +236,7 @@ class Agent:
                     print("METRICS PUSHED")
                     if plot_file_path is not None:
                         with open(plot_file_path, "wb") as f:
-                            pickle.dump((scores_to_plot),f)
+                            pickle.dump((scores_to_plot,step_per_game_list, epsilon_list),f)
                     if quitting: break
             
             if total_steps == steps_max: 
@@ -246,7 +246,9 @@ class Agent:
 if __name__ == '__main__':
     ## Fil til plotting information
     plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.pkl'
+
     ## Initialisér agent
     agent = Agent(state_rep='onestep', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.9999985,
-                  learning_rate=0.0001)
+                  learning_rate=0.0001, model_name="ET ELLER ANDET")
+    ##TRÆN
     agent.train(plot_file_path=plot_file_path)
