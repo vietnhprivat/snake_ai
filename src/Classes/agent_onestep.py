@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer(f'src/Classes/training_metrics/metric_files/DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
+        self.reward_optim = RewardOptimizer(f'/zhome/db/e/206305/snake_ai/src/Classes/optim_of_tab_q-learn/metric_files/DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -244,11 +244,11 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/onestep_training_17_01.pkl'
+    plot_file_path = '/zhome/db/e/206305/snake_ai/src/Classes/DQL_PLOT/TEST_PLOTS/onestep_training_17_01.pkl'
 
     ## Initialisér agent
     agent = Agent(state_rep='onestep', render=False, learning_rate=0.0001, epsilon_decay=0.9999997,
-                  step_reward="INDSÆT", apple_reward="INDSÆT", reward_closer="INDSÆT",death_reward="INDSÆT",
+                  step_reward=-3, apple_reward=87, reward_closer=2, death_reward=-268,
                   training=True, model_name="onestep_17_01")
     ##TRÆN
     agent.train(plot_file_path=plot_file_path)

@@ -14,7 +14,7 @@ import pandas as pd
 # Hvis data gemmes i samme format, kan denne også bruges uden at træne, men blot som databehandler.
 
 class ModelOptimizer():
-    def __init__(self, models_to_train, metric_folder_path='src\Classes\optim_of_tab_q-learn\metric_files\metric_test.txt', 
+    def __init__(self, models_to_train, metric_folder_path='src\Classes\optim_of_tab_q-learn\metric_files\metric_test.pkl', 
                  model_folder_path='src\Classes\optim_of_tab_q-learn\model_files\\'):
         # Models_to_train er hvor mange forskellige modeller, der skal trænes
         self.models_to_train = models_to_train
@@ -62,10 +62,10 @@ class ModelOptimizer():
         for i in range(self.models_to_train):
 
             # Vælg tilfældig straf for at tage et skridt og tilfældig reward for at fange æble
-            step_reward = step_choice if step_choice else -random.randint(-10,10)
-            apple_reward = apple_choice if apple_choice else random.randint(1,100)
-            death_reward = - random.randint(1,150)
-            closer_reward = random.randint(0, 10)
+            step_reward = step_choice if step_choice else -random.randint(-5,5)
+            apple_reward = apple_choice if apple_choice else random.randint(50,150)
+            death_reward = - random.randint(50,300)
+            closer_reward = random.randint(-5, 5)
 
             # Laver en path, hvor selve modellen gemmes.
             model_file_path = f'model_{i+models_in_file}_step_{step_reward}_apple_{apple_reward}_closer_{closer_reward}_death_{death_reward}.pkl'
@@ -188,12 +188,12 @@ class ModelOptimizer():
 
 if __name__ == "__main__":
     # Initialiserer en Optimizer. Tager som argument, hvor mange forskellige modeller, den skal træne.
-    model_optimizer = ModelOptimizer(10) #model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
-                                      #metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test.txt') 
+    model_optimizer = ModelOptimizer(500, model_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/model_files/', 
+                                      metric_folder_path='/zhome/db/e/206305/snake_ai/src/Classes/TQL/metric_files/metric_test_16_01.pkl') 
 
     # Træner modeller, argumenter er ant. træningsruns og ant. runs, der laves beregninger på. 
     # Slå double_check fra for bare at træne
-    model_optimizer.Train_Models(600,400)
+    model_optimizer.Train_Models(500,300)
 
     # Tager på nuværende tidspunkt SCORE eller TIME som input og sorterer modellerne efter dem, der er bedst
     # på den parameter
