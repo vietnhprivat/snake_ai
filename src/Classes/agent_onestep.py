@@ -65,10 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        # self.reward_optim = RewardOptimizer(f'src\Classes\optim_of_tab_q-learn\metric_files\DQN_{state_rep}_metrics.pkl')
-        self.reward_optim = RewardOptimizer(f'/zhome/db/e/206305/snake_ai/src/Classes/optim_of_tab_q-learn/metric_files/DQN_{state_rep}_metrics_15_01.pkl')
-
-        
+        self.reward_optim = RewardOptimizer(f'src/Classes/training_metrics/metric_files/DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -149,8 +146,7 @@ class Agent:
         toggle_epsilon, toggle_highscore = False, False
         step_per_game = 0
         total_steps = 0
-        steps_max = 5_000_000
-
+        steps_max = 30_000_000
         while True:
             total_steps +=1
             ## Hvis det er muligt at rendere, går vi igennem knapper
@@ -206,7 +202,7 @@ class Agent:
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
-                    self.model.save(index=self.model_name)
+                    if self.is_training: self.model.save(index=self.model_name)
                 if plot_file_path is not None:
                     scores_to_plot.append(curr_score)
                     step_per_game_list.append(step_per_game)
@@ -239,7 +235,7 @@ class Agent:
                     print("METRICS PUSHED")
                     if plot_file_path is not None:
                         with open(plot_file_path, "wb") as f:
-                            pickle.dump((scores_to_plot, step_per_game_list, epsilon_list),f)
+                            pickle.dump((scores_to_plot,step_per_game_list, epsilon_list),f)
                     if quitting: break
             
             if total_steps == steps_max: 
@@ -248,9 +244,11 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    # plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.pkl'
-    plot_file_path = '/zhome/db/e/206305/snake_ai/src/Classes/DQL_PLOT/TEST_PLOTS/plot_file_onestep_15_01.pkl'
+    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/onestep_training_17_01.pkl'
+
     ## Initialisér agent
-    agent = Agent(state_rep='onestep', apple_reward=68, step_reward=8, death_reward=-112, reward_closer=2, render=False, epsilon_decay=0.9999985,
-                  learning_rate=0.0001, model_name="onestep_15_01")
+    agent = Agent(state_rep='onestep', render=False, learning_rate=0.0001, epsilon_decay=0.9999997,
+                  step_reward="INDSÆT", apple_reward="INDSÆT", reward_closer="INDSÆT",death_reward="INDSÆT",
+                  training=True, model_name="onestep_17_01")
+    ##TRÆN
     agent.train(plot_file_path=plot_file_path)
