@@ -386,7 +386,7 @@ class Snake_Game():
     # Tjekker, om slangen sidder fast. Jo længere den er, jo længere tid har den til at finde 
     # Et nyt æble. Hvis den sidder fast, afsluttes spillet oppe i is_game_over
     def is_stuck(self):
-        if self.stuck_step > len(self.snake_body)*100: return True
+        if self.stuck_step > (self.window_x/10)*(self.window_y/10)*1.1: return True
         else: return False
 
     # Gør det samme som is_game_over, men ændrer ikke på spillet. Kan bruges til at finde ud af,
@@ -435,6 +435,17 @@ class Snake_Game():
         grid2D = grid.flatten()
         
         return grid2D
+    
+    def get_state_mod_grid(self):
+        grid = self.grid()
+        over_count = 0
+        under_count = 0
+        for block in grid[self.snake_position[1]-1]:
+            if block == 0: over_count += 1
+        for block in grid[self.snake_position[1]+1]:
+            if block == 0: under_count +=1
+
+
     
 
     def get_state_vector(self):
