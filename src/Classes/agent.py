@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer(f'src\Classes\optim_of_tab_q-learn\metric_files\DQN_{state_rep}_metrics.pkl') ## HER BLIVER PD DF SKUBBET TIL
+        self.reward_optim = RewardOptimizer(f'src\Classes\metrics_of_non_training\metric_files\DQN_{state_rep}_metrics_non_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -146,8 +146,7 @@ class Agent:
         toggle_epsilon, toggle_highscore = False, False
         step_per_game = 0
         total_steps = 0
-        steps_max = 5_000_000
-        steps_max = 1000
+        steps_max = 5_000_000_000_000
         while True:
             total_steps +=1
             ## Hvis det er muligt at rendere, går vi igennem knapper
@@ -203,7 +202,7 @@ class Agent:
                 if curr_score > high_score:
                     high_score = curr_score
                     print("Highscore!", high_score)
-                    self.model.save(index=self.model_name)
+                    if self.is_training: self.model.save(index=self.model_name)
                 if plot_file_path is not None:
                     scores_to_plot.append(curr_score)
                     step_per_game_list.append(step_per_game)
@@ -245,10 +244,9 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src\Classes\DQL_PLOT\TEST_PLOTS\plot_file.pkl'
+    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/grid_non_training_16_01.pkl'
 
     ## Initialisér agent
-    agent = Agent(state_rep='onestep', apple_reward=35,step_reward=-7,death_reward=-120, render=True, epsilon_decay=0.9999985,
-                  learning_rate=0.0001, model_name="ET ELLER ANDET")
+    agent = Agent(state_rep='grid', file_path='DQL_models/model/grid_15_01_model.pth', training=False,render=True)
     ##TRÆN
-    agent.train(plot_file_path=plot_file_path)
+    agent.train(plot_file_path=plot_file_path, rounds_to_play=10_000)
