@@ -48,7 +48,8 @@ class Q_learning:
     # Optimizeren er et objekt fra vores reward_optimizer fil, RewardOptimizer()
     # Hvis man angiver en optimizer, skal man også angive et index for modellen, og hvor mange
     # af de sidste runs, man vil se på (look_at), når man udregner gennemsnitlig score og tid
-    def train(self,runs,show_loading=True, Optimizer=None, look_at = None, index=None, plot_file_path=None):
+    def train(self,runs,show_loading=True, Optimizer=None, look_at = None, index=None, plot_file_path=None,
+              training=True):
         step_per_game_list = []
         step_per_game = 0
         scores_list = []
@@ -84,8 +85,9 @@ class Q_learning:
                 print(f"{round(self.game.get_game_count()/(runs/100))}%")
             
             # Får den nye state og opdaterer Q-tabel    
-            qnew = self.get_q_current()
-            self.update(qcurrent,action,qnew)
+            if training: 
+                qnew = self.get_q_current()
+                self.update(qcurrent,action,qnew)
 
         # Hvis der er en optimizer, udvælger den de sidste look_at runs, udregner gns, og tilføjer dem
         # til en liste. Se dokumentation i reward_optimizer.py
@@ -108,9 +110,9 @@ class Q_learning:
           
 
 if __name__ == "__main__":
-    game = Snake_Game(snake_speed=150,kill_stuck=True, render=False)
+    game = Snake_Game(snake_speed=150,kill_stuck=True, render=False, step_punish=-3, apple_reward=87,
+                      reward_closer=2, death_punish=-268, window_x=200, window_y=200)
     buffer = Data()
-    model = Q_learning(game, buffer=buffer, training=False, file_path='Classes\optim_of_tab_q-learn\model_files\model_6_step_0_apple_87.pkl')
-    model.train(10)
-    model.game = Snake_Game(snake_speed=150,kill_stuck=True, render=True)
-    model.train(5)
+    
+    model = Q_learning(game, buffer=buffer, training=True, file_path='src/Classes/TAB_MODEL_AND_PLOT/MODEL/final_tab_q_model.pkl')
+    model.train(100000, training=True, plot_file_path='src/Classes/TAB_MODEL_AND_PLOT/DATA_PLOT_TRAINING/tab_optim_rewards.pkl')
