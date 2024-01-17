@@ -3,7 +3,7 @@
 #BSUB -o onestep17_output%J.out
 #BSUB -e onestep17_error_ql%J.err
 #BSUB -n 12
-#BSUB -q gpua40
+#BSUB -q gpu
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -R "rusage[mem=12G]"
 #BSUB -R "span[hosts=1]"

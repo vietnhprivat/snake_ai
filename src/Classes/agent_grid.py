@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer(f'src/Classes/training_metrics/metric_files/DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
+        self.reward_optim = RewardOptimizer(f'/zhome/db/e/206305/snake_ai/src/Classes/optim_of_tab_q-learn/metric_files/DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -244,7 +244,7 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/grid_training_18_01.pkl'
+    plot_file_path = '/zhome/db/e/206305/snake_ai/src/Classes/DQL_PLOT/TEST_PLOTS/grid_training_18_01.pkl'
 
     ## Initialisér agent
     agent = Agent(state_rep='grid', render=False, learning_rate=0.0001, epsilon_decay=0.9999997,
