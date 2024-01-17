@@ -114,5 +114,5 @@ if __name__ == "__main__":
                       reward_closer=2, death_punish=-268, window_x=200, window_y=200)
     buffer = Data()
     
-    model = Q_learning(game, buffer=buffer, training=True, file_path='src/Classes/TAB_MODEL_AND_PLOT/MODEL/final_tab_q_model.pkl')
-    model.train(100000, training=True, plot_file_path='src/Classes/TAB_MODEL_AND_PLOT/DATA_PLOT_TRAINING/tab_optim_rewards.pkl')
+    model = Q_learning(game, buffer=buffer, training=False, file_path='src/Classes/TAB_MODEL_AND_PLOT/MODEL/final_tab_q_model.pkl')
+    model.train(25_000, training=False, plot_file_path='src/Classes/TAB_MODEL_AND_PLOT/DATA_PLOT_RUNNING/tab_optim_rewards_running.pkl')
