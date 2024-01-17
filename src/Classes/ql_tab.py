@@ -48,8 +48,12 @@ class Q_learning:
     # Optimizeren er et objekt fra vores reward_optimizer fil, RewardOptimizer()
     # Hvis man angiver en optimizer, skal man også angive et index for modellen, og hvor mange
     # af de sidste runs, man vil se på (look_at), når man udregner gennemsnitlig score og tid
-    def train(self,runs,show_loading=True, Optimizer=None, look_at = None, index=None):
+    def train(self,runs,show_loading=True, Optimizer=None, look_at = None, index=None, plot_file_path=None):
+        step_per_game_list = []
+        step_per_game = 0
+        scores_list = []
         while self.game.get_game_count() < runs:
+            step_per_game += 1
             # Kigger på nuværende state og vælger en action:
             qcurrent = self.get_q_current()
             action = self.get_action()
@@ -65,6 +69,12 @@ class Q_learning:
             # Til den
             if Optimizer is not None:
                 Optimizer.get_metrics(self.game.score,time_taken,game_over)
+
+            if game_over:
+                step_per_game_list.append(step_per_game)
+                step_per_game = 0
+                scores_list.append(self.game.score)
+
 
             # Funktion, der tjekker om spillet er slut, og genstarter spillet osv. hvis det er
             self.game.is_game_over()
@@ -88,6 +98,9 @@ class Q_learning:
         # Når træning er slut, gemmes Q-tabellen i en pickle-fil med den tidligere angivne path
         with open(self.file_path, 'wb') as f:
             pickle.dump(dict(self.Q), f)
+        if plot_file_path is not None:
+            with open(plot_file_path, "wb") as f:
+                pickle.dump((scores_list, step_per_game_list), f)
              
 
              
