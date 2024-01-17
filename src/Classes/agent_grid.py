@@ -244,11 +244,11 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/grid_training_17_01.pkl'
+    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/grid_training_18_01.pkl'
 
     ## Initialisér agent
     agent = Agent(state_rep='grid', render=False, learning_rate=0.0001, epsilon_decay=0.9999997,
-                  step_reward="INDSÆT", apple_reward="INDSÆT", reward_closer="INDSÆT",death_reward="INDSÆT",
-                  training=True, model_name="grid_17_01")
+                  step_reward=-3, apple_reward=87, reward_closer=2,death_reward=-268,
+                  training=True, model_name="grid_18_01")
     ##TRÆN
     agent.train(plot_file_path=plot_file_path)
