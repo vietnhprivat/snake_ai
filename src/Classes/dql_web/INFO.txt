@@ -1,0 +1,1 @@
+This folder contains the Deep Q-learning model we got inspiration from. Credits to https://github.com/patrickloeber
