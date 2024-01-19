@@ -436,18 +436,6 @@ class Snake_Game():
         
         return grid2D
     
-    def get_state_mod_grid(self):
-        grid = self.grid()
-        over_count = 0
-        under_count = 0
-        for block in grid[self.snake_position[1]-1]:
-            if block == 0: over_count += 1
-        for block in grid[self.snake_position[1]+1]:
-            if block == 0: under_count +=1
-
-
-    
-
     def get_state_vector(self):
         # Hoved koordinater
         head_x = self.snake_position[0] // 10
@@ -486,8 +474,6 @@ class Snake_Game():
         state_output = np.concatenate((head_cordinates, local_fruit_position, distance, local_direction, available_moves, wall_danger, body_danger), axis = None)
 
         return state_output
-
-
 
 class Data():
     def __init__(self):
