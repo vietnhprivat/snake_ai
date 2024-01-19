@@ -65,7 +65,7 @@ class Agent:
         self.epsilon_min = epsilon_min ## Minimumsværdi af epsilon
 
         ## Initialisér en rewardoptimizer til at gemme metrics
-        self.reward_optim = RewardOptimizer(f'src\Classes\metrics_of_non_training\metric_files\DQN_{state_rep}_metrics_non_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
+        self.reward_optim = RewardOptimizer(f'DQL_PLOT\TEST_PLOTS\DQN_{state_rep}_metrics_training.pkl') ## HER BLIVER PD DF SKUBBET TIL
 
         ## Får state. se game_class
     def get_state(self, game):
@@ -244,9 +244,9 @@ class Agent:
 
 if __name__ == '__main__':
     ## Fil til plotting information
-    plot_file_path = 'src/Classes/DQL_PLOT/DATA_PLOTS/grid_non_training_16_01.pkl'
+    plot_file_path = 'DQL_PLOT/TEST_PLOTS/grid_non_training_16_01.pkl'
 
     ## Initialisér agent
-    agent = Agent(state_rep='grid', file_path='DQL_models/model/grid_15_01_model.pth', training=False,render=True)
+    agent = Agent(state_rep='onestep', training=True,render=True)
     ##TRÆN
     agent.train(plot_file_path=plot_file_path, rounds_to_play=10_000)
